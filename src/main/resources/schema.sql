@@ -1,9 +1,9 @@
-CREATE TABLE Category (
+CREATE TABLE IF NOT EXISTS Category (
                           category_number SERIAL PRIMARY KEY,
                           category_name VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE Employee (
+CREATE TABLE IF NOT EXISTS Employee (
                           id_employee VARCHAR(10) PRIMARY KEY,
                           empl_surname VARCHAR(50) NOT NULL,
                           empl_name VARCHAR(50) NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE Employee (
                           password VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE Product (
+CREATE TABLE IF NOT EXISTS Product (
                          id_product SERIAL PRIMARY KEY,
                          category_number INT NOT NULL,
                          product_name VARCHAR(50) NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE Product (
                          FOREIGN KEY (category_number) REFERENCES Category(category_number) ON UPDATE CASCADE ON DELETE NO ACTION
 );
 
-CREATE TABLE Store_Product (
+CREATE TABLE IF NOT EXISTS Store_Product (
                                UPC VARCHAR(12) PRIMARY KEY,
                                UPC_prom VARCHAR(12),
                                id_product INT NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE Store_Product (
                                FOREIGN KEY (UPC_prom) REFERENCES Store_Product(UPC) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE Customer_Card (
+CREATE TABLE IF NOT EXISTS Customer_Card (
                                card_number VARCHAR(13) PRIMARY KEY,
                                cust_surname VARCHAR(50) NOT NULL,
                                cust_name VARCHAR(50) NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE Customer_Card (
                                percent INT NOT NULL CHECK (percent >= 0)
 );
 
-CREATE TABLE "Check" (
+CREATE TABLE IF NOT EXISTS "Check" (
                          check_number VARCHAR(10) PRIMARY KEY,
                          id_employee VARCHAR(10) NOT NULL,
                          card_number VARCHAR(13),
@@ -62,7 +62,7 @@ CREATE TABLE "Check" (
                          FOREIGN KEY (card_number) REFERENCES Customer_Card(card_number) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE Sale (
+CREATE TABLE IF NOT EXISTS Sale (
                       UPC VARCHAR(12) NOT NULL,
                       check_number VARCHAR(10) NOT NULL,
                       product_number INT NOT NULL CHECK (product_number > 0),
