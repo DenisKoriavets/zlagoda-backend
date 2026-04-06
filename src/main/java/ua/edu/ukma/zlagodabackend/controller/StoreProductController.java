@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ua.edu.ukma.zlagodabackend.dto.StoreProductDetailsDto;
-import ua.edu.ukma.zlagodabackend.dto.StoreProductRequest;
+import ua.edu.ukma.zlagodabackend.dto.storeProduct.StoreProductDetailsDto;
+import ua.edu.ukma.zlagodabackend.dto.storeProduct.StoreProductRequest;
 import ua.edu.ukma.zlagodabackend.model.StoreProduct;
 import ua.edu.ukma.zlagodabackend.service.StoreProductService;
 

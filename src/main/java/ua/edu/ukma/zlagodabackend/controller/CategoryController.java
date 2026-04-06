@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ua.edu.ukma.zlagodabackend.dto.CategoryRequest;
+import ua.edu.ukma.zlagodabackend.dto.category.CategoryRequest;
 import ua.edu.ukma.zlagodabackend.model.Category;
 import ua.edu.ukma.zlagodabackend.service.CategoryService;
 

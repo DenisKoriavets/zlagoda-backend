@@ -4,7 +4,7 @@ package ua.edu.ukma.zlagodabackend.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ua.edu.ukma.zlagodabackend.dao.CategoryDao;
-import ua.edu.ukma.zlagodabackend.dto.CategoryRequest;
+import ua.edu.ukma.zlagodabackend.dto.category.CategoryRequest;
 import ua.edu.ukma.zlagodabackend.exception.ResourceNotFoundException;
 import ua.edu.ukma.zlagodabackend.model.Category;
 

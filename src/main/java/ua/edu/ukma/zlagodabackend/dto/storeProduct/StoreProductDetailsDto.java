@@ -1,4 +1,4 @@
-package ua.edu.ukma.zlagodabackend.dto;
+package ua.edu.ukma.zlagodabackend.dto.storeProduct;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

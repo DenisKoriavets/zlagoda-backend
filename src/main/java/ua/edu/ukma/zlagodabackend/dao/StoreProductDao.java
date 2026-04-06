@@ -5,7 +5,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import ua.edu.ukma.zlagodabackend.dto.StoreProductDetailsDto;
+import ua.edu.ukma.zlagodabackend.dto.storeProduct.StoreProductDetailsDto;
 import ua.edu.ukma.zlagodabackend.model.StoreProduct;
 
 import java.math.BigDecimal;
@@ -116,5 +116,19 @@ public class StoreProductDao {
     public void deleteByUpc(String upc) {
         String sql = "DELETE FROM Store_Product WHERE upc = ?";
         jdbcTemplate.update(sql, upc);
+    }
+
+    public void decreaseQuantity(String upc, int quantityToSubtract) {
+        String sql = """
+                UPDATE Store_Product
+                SET products_number = products_number - ?
+                WHERE upc = ? AND products_number >= ?
+                """;
+
+        int updatedRows = jdbcTemplate.update(sql, quantityToSubtract, upc, quantityToSubtract);
+
+        if (updatedRows == 0) {
+            throw new IllegalArgumentException("Помилка конкурентного доступу: недостатньо товару на складі для UPC " + upc);
+        }
     }
 }

@@ -5,7 +5,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ua.edu.ukma.zlagodabackend.dto.ProductRequest;
+import ua.edu.ukma.zlagodabackend.dto.product.ProductRequest;
 import ua.edu.ukma.zlagodabackend.model.Product;
 import ua.edu.ukma.zlagodabackend.service.ProductService;
 
