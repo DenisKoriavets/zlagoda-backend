@@ -1,0 +1,35 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: zlagoda-backend
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/zlagoda}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:secret}
+    driver-class-name: org.postgresql.Driver
+
+  sql:
+    init:
+      mode: always
+      platform: postgres
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: UTC
+
+  web:
+    error:
+      include-message: always
+
+jwt:
+  secret: ${JWT_SECRET:zlagoda_super_secret_key_change_in_production_9999}
+  expiration: 86400000
+
+logging:
+  level:
+    root: info
+    com.zlagoda: DEBUG
+    org.springframework.jdbc.core.JdbcTemplate: DEBUG
