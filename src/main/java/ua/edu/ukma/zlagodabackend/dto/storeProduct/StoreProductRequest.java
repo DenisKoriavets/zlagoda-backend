@@ -1,4 +1,4 @@
-package ua.edu.ukma.zlagodabackend.dto;
+package ua.edu.ukma.zlagodabackend.dto.storeProduct;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;

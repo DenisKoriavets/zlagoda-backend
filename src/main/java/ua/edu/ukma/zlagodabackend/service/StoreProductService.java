@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.edu.ukma.zlagodabackend.dao.StoreProductDao;
-import ua.edu.ukma.zlagodabackend.dto.StoreProductDetailsDto;
-import ua.edu.ukma.zlagodabackend.dto.StoreProductRequest;
+import ua.edu.ukma.zlagodabackend.dto.storeProduct.StoreProductDetailsDto;
+import ua.edu.ukma.zlagodabackend.dto.storeProduct.StoreProductRequest;
 import ua.edu.ukma.zlagodabackend.exception.ResourceNotFoundException;
 import ua.edu.ukma.zlagodabackend.model.StoreProduct;
 

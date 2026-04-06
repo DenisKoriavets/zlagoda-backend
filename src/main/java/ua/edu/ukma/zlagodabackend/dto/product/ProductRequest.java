@@ -1,4 +1,4 @@
-package ua.edu.ukma.zlagodabackend.dto;
+package ua.edu.ukma.zlagodabackend.dto.product;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
