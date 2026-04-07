@@ -57,4 +57,16 @@ public class CustomerCardDao {
     public void delete(String cardNumber) {
         jdbc.update("DELETE FROM Customer_Card WHERE card_number = ?", cardNumber);
     }
+
+    public List<CustomerCard> findByProductUpc(String upc) {
+        String sql = """
+            SELECT DISTINCT cc.*
+            FROM Customer_Card cc
+            JOIN "Check" c ON cc.card_number = c.card_number
+            JOIN Sale s ON c.check_number = s.check_number
+            WHERE s.upc = ?
+            ORDER BY cc.cust_surname ASC
+            """;
+        return jdbc.query(sql, mapper, upc);
+    }
 }
