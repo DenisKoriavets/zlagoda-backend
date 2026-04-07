@@ -7,8 +7,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import ua.edu.ukma.zlagodabackend.dto.LoginRequest;
-import ua.edu.ukma.zlagodabackend.dto.LoginResponse;
+import ua.edu.ukma.zlagodabackend.dto.login.LoginRequest;
+import ua.edu.ukma.zlagodabackend.dto.login.LoginResponse;
 import ua.edu.ukma.zlagodabackend.security.EmployeeDetails;
 import ua.edu.ukma.zlagodabackend.security.JwtUtils;
 
