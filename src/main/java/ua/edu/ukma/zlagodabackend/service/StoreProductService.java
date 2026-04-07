@@ -1,8 +1,10 @@
 package ua.edu.ukma.zlagodabackend.service;
 
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ua.edu.ukma.zlagodabackend.dao.SaleDao;
 import ua.edu.ukma.zlagodabackend.dao.StoreProductDao;
 import ua.edu.ukma.zlagodabackend.dto.storeProduct.StoreProductDetailsDto;
 import ua.edu.ukma.zlagodabackend.dto.storeProduct.StoreProductRequest;
@@ -18,6 +20,7 @@ public class StoreProductService {
 
     private final StoreProductDao storeProductDao;
     private final ProductService productService;
+    private final SaleDao saleDao;
 
     public List<StoreProductDetailsDto> findAll(Boolean isPromotional, String sortBy) {
         return storeProductDao.findAllWithFilters(isPromotional, sortBy);
@@ -75,6 +78,11 @@ public class StoreProductService {
 
         storeProductDao.update(existing);
         return existing;
+    }
+
+    public int getTotalSoldQuantity(String upc, LocalDateTime from, LocalDateTime to) {
+        findEntityByUpc(upc);
+        return saleDao.getTotalQuantitySold(upc, from, to);
     }
 
     public void delete(String upc) {

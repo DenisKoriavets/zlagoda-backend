@@ -1,5 +1,6 @@
 package ua.edu.ukma.zlagodabackend.dao;
 
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -46,5 +47,15 @@ public class SaleDao {
                 rs.getInt("product_number"),
                 rs.getBigDecimal("selling_price")
         ), checkNumber);
+    }
+
+    public int getTotalQuantitySold(String upc, LocalDateTime from, LocalDateTime to) {
+        String sql = """
+            SELECT COALESCE(SUM(s.product_number), 0)
+            FROM Sale s
+            JOIN "Check" c ON s.check_number = c.check_number
+            WHERE s.upc = ? AND c.print_date BETWEEN ? AND ?
+            """;
+        return jdbcTemplate.queryForObject(sql, Integer.class, upc, from, to);
     }
 }
