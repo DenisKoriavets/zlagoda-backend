@@ -62,6 +62,23 @@ public class EmployeeDao {
             e.getCity(), e.getStreet(), e.getZipCode(), e.getPassword());
     }
 
+    public void update(Employee e) {
+        String sql = """
+            UPDATE Employee 
+            SET empl_surname = ?, empl_name = ?, empl_patronymic = ?, 
+                empl_role = ?, salary = ?, date_of_birth = ?, 
+                date_of_start = ?, phone_number = ?, city = ?, 
+                street = ?, zip_code = ?
+            WHERE id_employee = ?
+            """;
+        jdbc.update(sql,
+            e.getEmplSurname(), e.getEmplName(), e.getEmplPatronymic(),
+            e.getEmplRole(), e.getSalary(), e.getDateOfBirth(),
+            e.getDateOfStart(), e.getPhoneNumber(), e.getCity(),
+            e.getStreet(), e.getZipCode(), e.getIdEmployee()
+        );
+    }
+
     public void delete(String id) {
         String sql = "DELETE FROM Employee WHERE id_employee = ?";
         jdbc.update(sql, id);
