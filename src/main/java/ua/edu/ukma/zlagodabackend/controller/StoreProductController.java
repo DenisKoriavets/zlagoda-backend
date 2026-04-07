@@ -1,8 +1,11 @@
 package ua.edu.ukma.zlagodabackend.controller;
 
 import jakarta.validation.Valid;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -43,13 +46,13 @@ public class StoreProductController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    // @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasRole('MANAGER')")
     public StoreProduct createStoreProduct(@Valid @RequestBody StoreProductRequest request) {
         return storeProductService.create(request);
     }
 
     @PutMapping("/{upc}")
-    // @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasRole('MANAGER')")
     public StoreProduct updateStoreProduct
             (
                     @PathVariable String upc,
@@ -60,8 +63,17 @@ public class StoreProductController {
 
     @DeleteMapping("/{upc}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    // @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasRole('MANAGER')")
     public void deleteStoreProduct(@PathVariable String upc) {
         storeProductService.delete(upc);
+    }
+
+    @GetMapping("/{upc}/total-sold")
+    @PreAuthorize("hasRole('MANAGER')")
+    public Integer getTotalSold(
+        @PathVariable String upc,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+        return storeProductService.getTotalSoldQuantity(upc, from, to);
     }
 }

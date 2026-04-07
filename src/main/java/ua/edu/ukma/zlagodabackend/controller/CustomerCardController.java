@@ -53,4 +53,10 @@ public class CustomerCardController {
     public void deleteCard(@PathVariable String number) {
         customerCardService.delete(number);
     }
+
+    @GetMapping("/by-product/{upc}")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<CustomerCard> getCustomersByProduct(@PathVariable String upc) {
+        return customerCardService.getCustomersByProduct(upc);
+    }
 }

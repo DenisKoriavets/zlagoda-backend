@@ -1,9 +1,12 @@
 package ua.edu.ukma.zlagodabackend.service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ua.edu.ukma.zlagodabackend.dao.EmployeeDao;
+import ua.edu.ukma.zlagodabackend.dto.employee.CashierSalesResponse;
 import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeCreateRequest;
 import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeUpdateRequest;
 import ua.edu.ukma.zlagodabackend.exception.ResourceNotFoundException;
@@ -88,5 +91,12 @@ public class EmployeeService {
     public void delete(String id) {
         findById(id);
         employeeDao.delete(id);
+    }
+
+    public CashierSalesResponse getCashierSales(String id, LocalDateTime from, LocalDateTime to) {
+        findById(id);
+
+        return employeeDao.getTotalSalesByCashier(id, from, to)
+            .orElse(new CashierSalesResponse(id, "", "", BigDecimal.ZERO));
     }
 }

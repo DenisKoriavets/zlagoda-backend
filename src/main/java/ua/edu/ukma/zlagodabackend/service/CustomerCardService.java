@@ -52,6 +52,10 @@ public class CustomerCardService {
         customerCardDao.delete(cardNumber);
     }
 
+    public List<CustomerCard> getCustomersByProduct(String upc) {
+        return customerCardDao.findByProductUpc(upc);
+    }
+
     private CustomerCard mapToEntity(CustomerCardRequest request) {
         return new CustomerCard(
             request.cardNumber(),

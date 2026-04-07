@@ -1,10 +1,13 @@
 package ua.edu.ukma.zlagodabackend.controller;
 
 import jakarta.validation.Valid;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import ua.edu.ukma.zlagodabackend.dto.employee.CashierSalesResponse;
 import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeCreateRequest;
 import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeUpdateRequest;
 import ua.edu.ukma.zlagodabackend.model.Employee;
@@ -49,5 +52,14 @@ public class EmployeeController {
     @PreAuthorize("hasRole('MANAGER')")
     public void deleteEmployee(@PathVariable String id) {
         employeeService.delete(id);
+    }
+
+    @GetMapping("/{id}/sales")
+    @PreAuthorize("hasRole('MANAGER')") // Звіти — тільки для менеджерів
+    public CashierSalesResponse getCashierSalesReport(
+        @PathVariable String id,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+        return employeeService.getCashierSales(id, from, to);
     }
 }
