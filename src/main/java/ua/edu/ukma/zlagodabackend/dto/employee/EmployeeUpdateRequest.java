@@ -4,8 +4,7 @@ import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record EmployeeRequest(
-    @NotBlank(message = "ID є обов'язковим") String idEmployee,
+public record EmployeeUpdateRequest(
     @NotBlank(message = "Прізвище є обов'язковим") String emplSurname,
     @NotBlank(message = "Ім'я є обов'язковим") String emplName,
     String emplPatronymic,
@@ -15,7 +14,6 @@ public record EmployeeRequest(
     @NotNull(message = "Дата початку роботи є обов'язковою") LocalDate dateOfStart,
     @NotBlank(message = "Телефон є обов'язковим") String phoneNumber,
     @NotBlank(message = "Місто є обов'язковим") String city,
-    @NotBlank(message = "Вулиця є обов'язковою") String street,
-    @NotBlank(message = "Індекс є обов'язковим") String zipCode,
-    String password
+    @NotBlank(message = "Вулиця є обов'язковим") String street,
+    @NotBlank(message = "Індекс є обов'язковим") String zipCode
 ) {}

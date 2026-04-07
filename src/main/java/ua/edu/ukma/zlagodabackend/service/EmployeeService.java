@@ -4,7 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ua.edu.ukma.zlagodabackend.dao.EmployeeDao;
-import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeRequest;
+import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeCreateRequest;
+import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeUpdateRequest;
 import ua.edu.ukma.zlagodabackend.exception.ResourceNotFoundException;
 import ua.edu.ukma.zlagodabackend.model.Employee;
 
@@ -25,7 +26,7 @@ public class EmployeeService {
 
     public Employee findById(String id) {
         return employeeDao.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Працівника з ID " + id + " не знайдено"));
+            .orElseThrow(() -> new ResourceNotFoundException("Працівника з ID " + id + " не знайдено"));
     }
 
     public List<Employee> findCashiers() {
@@ -36,39 +37,12 @@ public class EmployeeService {
         return employeeDao.findBySurname(surname);
     }
 
-    public Employee create(EmployeeRequest request) {
+    public Employee create(EmployeeCreateRequest request) {
         if (Period.between(request.dateOfBirth(), LocalDate.now()).getYears() < 18) {
             throw new IllegalArgumentException("Працівник повинен бути повнолітнім (18+ років)");
         }
 
-        Employee employee = mapToEntity(request);
-        
-        if (request.password() != null) {
-            employee.setPassword(passwordEncoder.encode(request.password()));
-        }
-
-        employeeDao.save(employee);
-        return employee;
-    }
-
-    public Employee update(String id, EmployeeRequest request) {
-        Employee existing = findById(id);
-        
-        Employee updated = mapToEntity(request);
-        updated.setIdEmployee(id);
-        updated.setPassword(existing.getPassword());
-
-        employeeDao.update(updated);
-        return updated;
-    }
-
-    public void delete(String id) {
-        findById(id);
-        employeeDao.delete(id);
-    }
-
-    private Employee mapToEntity(EmployeeRequest request) {
-        return new Employee(
+        Employee employee = new Employee(
             request.idEmployee(),
             request.emplSurname(),
             request.emplName(),
@@ -81,7 +55,38 @@ public class EmployeeService {
             request.city(),
             request.street(),
             request.zipCode(),
-            null
+            passwordEncoder.encode(request.password())
         );
+
+        employeeDao.save(employee);
+        return employee;
+    }
+
+    public Employee update(String id, EmployeeUpdateRequest request) {
+        Employee existing = findById(id);
+
+        Employee updated = new Employee(
+            id,
+            request.emplSurname(),
+            request.emplName(),
+            request.emplPatronymic(),
+            request.emplRole(),
+            request.salary(),
+            request.dateOfBirth(),
+            request.dateOfStart(),
+            request.phoneNumber(),
+            request.city(),
+            request.street(),
+            request.zipCode(),
+            existing.getPassword()
+        );
+
+        employeeDao.update(updated);
+        return updated;
+    }
+
+    public void delete(String id) {
+        findById(id);
+        employeeDao.delete(id);
     }
 }
