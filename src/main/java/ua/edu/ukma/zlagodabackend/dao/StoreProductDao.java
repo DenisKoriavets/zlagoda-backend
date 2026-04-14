@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ua.edu.ukma.zlagodabackend.dto.storeProduct.StoreProductDetailsDto;
+import ua.edu.ukma.zlagodabackend.exception.InsufficientStockException;
 import ua.edu.ukma.zlagodabackend.model.StoreProduct;
 
 import java.math.BigDecimal;
@@ -28,6 +29,10 @@ public class StoreProductDao {
             rs.getBoolean("promotional_product")
     );
 
+    private static final String SALE_COUNT = """
+            (SELECT COUNT(*)::int FROM Sale s WHERE s.upc = sp.upc) AS sale_rows_count
+            """;
+
     private final RowMapper<StoreProductDetailsDto> detailsRowMapper = (rs, rowNum) -> new StoreProductDetailsDto(
             rs.getString("upc"),
             rs.getString("upc_prom"),
@@ -36,25 +41,44 @@ public class StoreProductDao {
             rs.getInt("products_number"),
             rs.getBoolean("promotional_product"),
             rs.getString("product_name"),
-            rs.getString("characteristics")
+            rs.getString("characteristics"),
+            (Integer) rs.getObject("sale_rows_count")
     );
 
-    public List<StoreProductDetailsDto> findAllWithFilters(Boolean isPromotional, String sortBy) {
+    public List<StoreProductDetailsDto> findAllWithFilters(Boolean isPromotional, Integer category, String search, String sortBy) {
         StringBuilder sql = new StringBuilder("""
-                SELECT sp.*, p.product_name, p.characteristics
+                SELECT sp.upc, sp.upc_prom, sp.id_product, sp.selling_price, sp.products_number, sp.promotional_product,
+                       p.product_name, p.characteristics,
+                """ + SALE_COUNT + """
                 FROM Store_Product sp
                 JOIN Product p ON sp.id_product = p.id_product
                 """);
 
         List<Object> params = new ArrayList<>();
+        List<String> conditions = new ArrayList<>();
 
         if (isPromotional != null) {
-            sql.append(" WHERE sp.promotional_product = ? \n");
+            conditions.add("sp.promotional_product = ?");
             params.add(isPromotional);
+        }
+        if (category != null) {
+            conditions.add("p.category_number = ?");
+            params.add(category);
+        }
+        if (search != null && !search.isBlank()) {
+            conditions.add("(p.product_name ILIKE ? OR sp.upc ILIKE ?)");
+            String pattern = "%" + search.trim() + "%";
+            params.add(pattern);
+            params.add(pattern);
+        }
+        if (!conditions.isEmpty()) {
+            sql.append(" WHERE ").append(String.join(" AND ", conditions));
         }
 
         if ("quantity".equalsIgnoreCase(sortBy)) {
             sql.append(" ORDER BY sp.products_number DESC");
+        } else if ("upc".equalsIgnoreCase(sortBy)) {
+            sql.append(" ORDER BY sp.upc ASC");
         } else {
             sql.append(" ORDER BY p.product_name ASC");
         }
@@ -64,7 +88,9 @@ public class StoreProductDao {
 
     public Optional<StoreProductDetailsDto> findDetailsByUpc(String upc) {
         String sql = """
-                SELECT sp.*, p.product_name, p.characteristics
+                SELECT sp.upc, sp.upc_prom, sp.id_product, sp.selling_price, sp.products_number, sp.promotional_product,
+                       p.product_name, p.characteristics,
+                """ + SALE_COUNT + """
                 FROM Store_Product sp
                 JOIN Product p ON sp.id_product = p.id_product
                 WHERE sp.upc = ?
@@ -80,6 +106,15 @@ public class StoreProductDao {
         String sql = "SELECT * FROM Store_Product WHERE upc = ?";
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(sql, entityRowMapper, upc));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<StoreProduct> findByProductAndPromo(Integer idProduct, boolean isPromotional) {
+        String sql = "SELECT * FROM Store_Product WHERE id_product = ? AND promotional_product = ?";
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, entityRowMapper, idProduct, isPromotional));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -113,6 +148,12 @@ public class StoreProductDao {
         jdbcTemplate.update(sql, newPrice, idProduct, isPromotional);
     }
 
+    public int countByIdProduct(Integer idProduct) {
+        String sql = "SELECT COUNT(*) FROM Store_Product WHERE id_product = ?";
+        Integer n = jdbcTemplate.queryForObject(sql, Integer.class, idProduct);
+        return n != null ? n : 0;
+    }
+
     public void deleteByUpc(String upc) {
         String sql = "DELETE FROM Store_Product WHERE upc = ?";
         jdbcTemplate.update(sql, upc);
@@ -128,7 +169,7 @@ public class StoreProductDao {
         int updatedRows = jdbcTemplate.update(sql, quantityToSubtract, upc, quantityToSubtract);
 
         if (updatedRows == 0) {
-            throw new IllegalArgumentException("Помилка конкурентного доступу: недостатньо товару на складі для UPC " + upc);
+            throw new InsufficientStockException("Недостатньо товару на складі для UPC " + upc);
         }
     }
 }

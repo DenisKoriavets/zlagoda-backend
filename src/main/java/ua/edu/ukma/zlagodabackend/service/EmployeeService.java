@@ -5,10 +5,12 @@ import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import ua.edu.ukma.zlagodabackend.dao.CheckDao;
 import ua.edu.ukma.zlagodabackend.dao.EmployeeDao;
 import ua.edu.ukma.zlagodabackend.dto.employee.CashierSalesResponse;
 import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeCreateRequest;
 import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeUpdateRequest;
+import ua.edu.ukma.zlagodabackend.exception.BusinessValidationException;
 import ua.edu.ukma.zlagodabackend.exception.ResourceNotFoundException;
 import ua.edu.ukma.zlagodabackend.model.Employee;
 
@@ -21,6 +23,7 @@ import java.util.List;
 public class EmployeeService {
 
     private final EmployeeDao employeeDao;
+    private final CheckDao checkDao;
     private final PasswordEncoder passwordEncoder;
 
     public List<Employee> findAll() {
@@ -36,13 +39,21 @@ public class EmployeeService {
         return employeeDao.findCashiers();
     }
 
+    public List<Employee> findByRole(String role) {
+        return switch (role.toLowerCase()) {
+            case "cashier" -> employeeDao.findCashiers();
+            case "manager" -> employeeDao.findManagers();
+            default -> throw new BusinessValidationException("Невірне значення role. Дозволено: manager, cashier");
+        };
+    }
+
     public List<Employee> findBySurname(String surname) {
         return employeeDao.findBySurname(surname);
     }
 
     public Employee create(EmployeeCreateRequest request) {
         if (Period.between(request.dateOfBirth(), LocalDate.now()).getYears() < 18) {
-            throw new IllegalArgumentException("Працівник повинен бути повнолітнім (18+ років)");
+            throw new BusinessValidationException("Працівник повинен бути повнолітнім (18+ років)");
         }
 
         Employee employee = new Employee(
@@ -58,7 +69,8 @@ public class EmployeeService {
             request.city(),
             request.street(),
             request.zipCode(),
-            passwordEncoder.encode(request.password())
+            passwordEncoder.encode(request.password()),
+            null
         );
 
         employeeDao.save(employee);
@@ -81,7 +93,8 @@ public class EmployeeService {
             request.city(),
             request.street(),
             request.zipCode(),
-            existing.getPassword()
+            existing.getPassword(),
+            null
         );
 
         employeeDao.update(updated);
@@ -90,6 +103,12 @@ public class EmployeeService {
 
     public void delete(String id) {
         findById(id);
+        int checks = checkDao.countByEmployeeId(id);
+        if (checks > 0) {
+            throw new BusinessValidationException(
+                    "Неможливо видалити працівника: є чеки, оформлені цим працівником. "
+                            + "Спочатку видаліть або змініть відповідні чеки.");
+        }
         employeeDao.delete(id);
     }
 

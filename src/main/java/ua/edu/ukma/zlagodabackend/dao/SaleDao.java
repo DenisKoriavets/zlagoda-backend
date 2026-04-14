@@ -49,11 +49,17 @@ public class SaleDao {
         ), checkNumber);
     }
 
+    public int countRowsByUpc(String upc) {
+        String sql = "SELECT COUNT(*) FROM Sale WHERE upc = ?";
+        Integer n = jdbcTemplate.queryForObject(sql, Integer.class, upc);
+        return n != null ? n : 0;
+    }
+
     public int getTotalQuantitySold(String upc, LocalDateTime from, LocalDateTime to) {
         String sql = """
             SELECT COALESCE(SUM(s.product_number), 0)
             FROM Sale s
-            JOIN "Check" c ON s.check_number = c.check_number
+            JOIN "check" c ON s.check_number = c.check_number
             WHERE s.upc = ? AND c.print_date BETWEEN ? AND ?
             """;
         return jdbcTemplate.queryForObject(sql, Integer.class, upc, from, to);

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import ua.edu.ukma.zlagodabackend.dto.employee.CashierSalesResponse;
 import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeCreateRequest;
@@ -24,8 +25,22 @@ public class EmployeeController {
 
     @GetMapping
     @PreAuthorize("hasRole('MANAGER')")
-    public List<Employee> getAllEmployees() {
+    public List<Employee> getAllEmployees(
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String surname) {
+        if (role != null && !role.isBlank()) {
+            return employeeService.findByRole(role);
+        }
+        if (surname != null && !surname.isBlank()) {
+            return employeeService.findBySurname(surname.trim());
+        }
         return employeeService.findAll();
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
+    public Employee getMyProfile(Authentication authentication) {
+        return employeeService.findById(authentication.getName());
     }
 
     @GetMapping("/{id}")

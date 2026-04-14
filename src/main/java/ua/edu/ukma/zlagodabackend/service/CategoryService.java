@@ -4,7 +4,9 @@ package ua.edu.ukma.zlagodabackend.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ua.edu.ukma.zlagodabackend.dao.CategoryDao;
+import ua.edu.ukma.zlagodabackend.dao.ProductDao;
 import ua.edu.ukma.zlagodabackend.dto.category.CategoryRequest;
+import ua.edu.ukma.zlagodabackend.exception.BusinessValidationException;
 import ua.edu.ukma.zlagodabackend.exception.ResourceNotFoundException;
 import ua.edu.ukma.zlagodabackend.model.Category;
 
@@ -15,9 +17,14 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryDao categoryDao;
+    private final ProductDao productDao;
 
     public List<Category> findAllSortedByName() {
         return categoryDao.findAllSortedByName();
+    }
+
+    public List<Category> searchByName(String namePart) {
+        return categoryDao.searchByName(namePart);
     }
 
     public Category findById(Integer id) {
@@ -40,7 +47,13 @@ public class CategoryService {
     }
 
     public void delete(Integer id) {
-        findById(id); 
+        findById(id);
+        int products = productDao.countByCategoryNumber(id);
+        if (products > 0) {
+            throw new BusinessValidationException(
+                    "Неможливо видалити категорію: у каталозі є товари цієї категорії. "
+                            + "Спочатку видаліть їх або перенесіть в іншу категорію.");
+        }
         categoryDao.deleteById(id);
     }
 }

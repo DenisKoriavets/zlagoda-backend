@@ -21,7 +21,7 @@ public class CheckDao {
 
     public void save(Check check) {
         String sql = """
-                INSERT INTO "Check" (
+                INSERT INTO "check" (
                     check_number,
                     id_employee,
                     card_number,
@@ -44,7 +44,7 @@ public class CheckDao {
         StringBuilder sql = new StringBuilder("""
                 SELECT check_number, id_employee, card_number, 
                        print_date, sum_total, vat
-                FROM "Check"
+                FROM "check"
                 WHERE 1=1
                 """);
 
@@ -77,7 +77,7 @@ public class CheckDao {
         String sql = """
                 SELECT check_number, id_employee, card_number, 
                        print_date, sum_total, vat
-                FROM "Check"
+                FROM "check"
                 WHERE check_number = ?
                 """;
 
@@ -90,10 +90,22 @@ public class CheckDao {
         }
     }
 
+    public int countByEmployeeId(String idEmployee) {
+        String sql = "SELECT COUNT(*) FROM \"check\" WHERE id_employee = ?";
+        Integer n = jdbcTemplate.queryForObject(sql, Integer.class, idEmployee);
+        return n != null ? n : 0;
+    }
+
+    public int countByCardNumber(String cardNumber) {
+        String sql = "SELECT COUNT(*) FROM \"check\" WHERE card_number = ?";
+        Integer n = jdbcTemplate.queryForObject(sql, Integer.class, cardNumber);
+        return n != null ? n : 0;
+    }
+
     public void deleteById(String checkNumber) {
         String sql = """
                 DELETE
-                FROM "Check"
+                FROM "check"
                 WHERE check_number = ?
                 """;
         jdbcTemplate.update(sql, checkNumber);

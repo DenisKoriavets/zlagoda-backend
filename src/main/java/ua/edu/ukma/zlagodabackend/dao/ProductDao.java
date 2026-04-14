@@ -20,47 +20,59 @@ public class ProductDao {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private final RowMapper<Product> rowMapper = (rs, rowNum) -> new Product(
-            rs.getInt("id_product"),
-            rs.getInt("category_number"),
-            rs.getString("product_name"),
-            rs.getString("characteristics")
-    );
+    private static final String STORE_COUNT = """
+            (SELECT COUNT(*)::int FROM Store_Product sp WHERE sp.id_product = p.id_product) AS store_product_count
+            """;
+
+    private final RowMapper<Product> rowMapper = (rs, rowNum) -> {
+        Product p = new Product();
+        p.setIdProduct(rs.getInt("id_product"));
+        p.setCategoryNumber(rs.getInt("category_number"));
+        p.setProductName(rs.getString("product_name"));
+        p.setProducer(rs.getString("producer"));
+        p.setCharacteristics(rs.getString("characteristics"));
+        p.setStoreProductCount((Integer) rs.getObject("store_product_count"));
+        return p;
+    };
 
     public List<Product> findAllSortedByName() {
         String sql = """
-                SELECT *
-                FROM Product
-                ORDER BY product_name ASC
+                SELECT p.id_product, p.category_number, p.product_name, p.producer, p.characteristics,
+                """ + STORE_COUNT + """
+                FROM Product p
+                ORDER BY p.product_name ASC
                 """;
         return jdbcTemplate.query(sql, rowMapper);
     }
 
     public List<Product> findByCategoryIdSortedByName(Integer categoryId) {
         String sql = """
-                SELECT *
-                FROM Product
-                WHERE category_number = ?
-                ORDER BY product_name ASC
+                SELECT p.id_product, p.category_number, p.product_name, p.producer, p.characteristics,
+                """ + STORE_COUNT + """
+                FROM Product p
+                WHERE p.category_number = ?
+                ORDER BY p.product_name ASC
                 """;
         return jdbcTemplate.query(sql, rowMapper, categoryId);
     }
 
     public List<Product> searchByName(String namePart) {
         String sql = """
-                SELECT *
-                FROM Product
-                WHERE product_name ILIKE ?
-                ORDER BY product_name ASC
+                SELECT p.id_product, p.category_number, p.product_name, p.producer, p.characteristics,
+                """ + STORE_COUNT + """
+                FROM Product p
+                WHERE p.product_name ILIKE ?
+                ORDER BY p.product_name ASC
                 """;
         return jdbcTemplate.query(sql, rowMapper, "%" + namePart + "%");
     }
 
     public Optional<Product> findById(Integer id) {
         String sql = """
-                SELECT *
-                FROM Product
-                WHERE id_product = ?
+                SELECT p.id_product, p.category_number, p.product_name, p.producer, p.characteristics,
+                """ + STORE_COUNT + """
+                FROM Product p
+                WHERE p.id_product = ?
                 """;
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(sql, rowMapper, id));
@@ -74,8 +86,9 @@ public class ProductDao {
                 INSERT INTO Product (
                     category_number,
                     product_name,
+                    producer,
                     characteristics
-                ) VALUES (?, ?, ?)
+                ) VALUES (?, ?, ?, ?)
                 """;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -84,13 +97,15 @@ public class ProductDao {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, product.getCategoryNumber());
             ps.setString(2, product.getProductName());
-            ps.setString(3, product.getCharacteristics());
+            ps.setString(3, product.getProducer());
+            ps.setString(4, product.getCharacteristics());
             return ps;
         }, keyHolder);
 
         if (keyHolder.getKeys() != null) {
             product.setIdProduct((Integer) keyHolder.getKeys().get("id_product"));
         }
+        product.setStoreProductCount(0);
         return product;
     }
 
@@ -99,6 +114,7 @@ public class ProductDao {
                 UPDATE Product
                 SET category_number = ?,
                     product_name = ?,
+                    producer = ?,
                     characteristics = ?
                 WHERE id_product = ?
                 """;
@@ -106,8 +122,15 @@ public class ProductDao {
         jdbcTemplate.update(sql,
                 product.getCategoryNumber(),
                 product.getProductName(),
+                product.getProducer(),
                 product.getCharacteristics(),
                 product.getIdProduct());
+    }
+
+    public int countByCategoryNumber(Integer categoryNumber) {
+        String sql = "SELECT COUNT(*) FROM Product WHERE category_number = ?";
+        Integer n = jdbcTemplate.queryForObject(sql, Integer.class, categoryNumber);
+        return n != null ? n : 0;
     }
 
     public void deleteById(Integer id) {

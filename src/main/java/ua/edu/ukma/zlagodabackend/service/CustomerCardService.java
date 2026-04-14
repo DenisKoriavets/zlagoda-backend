@@ -2,8 +2,10 @@ package ua.edu.ukma.zlagodabackend.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ua.edu.ukma.zlagodabackend.dao.CheckDao;
 import ua.edu.ukma.zlagodabackend.dao.CustomerCardDao;
 import ua.edu.ukma.zlagodabackend.dto.customer.CustomerCardRequest;
+import ua.edu.ukma.zlagodabackend.exception.BusinessValidationException;
 import ua.edu.ukma.zlagodabackend.exception.ResourceNotFoundException;
 import ua.edu.ukma.zlagodabackend.model.CustomerCard;
 
@@ -14,9 +16,20 @@ import java.util.List;
 public class CustomerCardService {
 
     private final CustomerCardDao customerCardDao;
+    private final CheckDao checkDao;
 
     public List<CustomerCard> findAll() {
         return customerCardDao.findAll();
+    }
+
+    public List<CustomerCard> findAll(String sort) {
+        if ("surname".equalsIgnoreCase(sort)) {
+            return customerCardDao.findAll();
+        }
+        if ("percent".equalsIgnoreCase(sort)) {
+            return customerCardDao.findAllSortedByPercent();
+        }
+        throw new BusinessValidationException("Невірне значення sort. Дозволено: surname, percent");
     }
 
     public CustomerCard findById(String cardNumber) {
@@ -49,6 +62,10 @@ public class CustomerCardService {
 
     public void delete(String cardNumber) {
         findById(cardNumber);
+        if (checkDao.countByCardNumber(cardNumber) > 0) {
+            throw new BusinessValidationException(
+                    "Неможливо видалити карту клієнта: є чеки з цією карткою.");
+        }
         customerCardDao.delete(cardNumber);
     }
 
@@ -66,7 +83,8 @@ public class CustomerCardService {
             request.city(),
             request.street(),
             request.zipCode(),
-            request.percent()
+            request.percent(),
+            null
         );
     }
 }

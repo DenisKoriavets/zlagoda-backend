@@ -18,8 +18,6 @@ public record StoreProductRequest(
         @NotNull(message = "ID товару є обов'язковим")
         Integer idProduct,
 
-        @NotNull(message = "Ціна є обов'язковою")
-        @DecimalMin(value = "0.01", message = "Ціна має бути більшою за 0")
         BigDecimal sellingPrice,
 
         @NotNull(message = "Кількість є обов'язковою")

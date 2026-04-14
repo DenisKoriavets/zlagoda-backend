@@ -34,9 +34,11 @@ public class StoreProductController {
     public List<StoreProductDetailsDto> getStoreProducts
             (
                     @RequestParam(required = false) Boolean promotional,
+                    @RequestParam(required = false) Integer category,
+                    @RequestParam(required = false) String search,
                     @RequestParam(defaultValue = "name") String sort
             ) {
-        return storeProductService.findAll(promotional, sort);
+        return storeProductService.findAll(promotional, category, search, sort);
     }
 
     @GetMapping("/{upc}")

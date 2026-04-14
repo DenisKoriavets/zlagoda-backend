@@ -15,6 +15,10 @@ public class EmployeeDao {
 
     private final JdbcTemplate jdbc;
 
+    private static final String CHECK_COUNT = """
+            (SELECT COUNT(*)::int FROM "check" c WHERE c.id_employee = e.id_employee) AS check_count
+            """;
+
     public EmployeeDao(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
@@ -32,26 +36,52 @@ public class EmployeeDao {
         rs.getString("city"),
         rs.getString("street"),
         rs.getString("zip_code"),
-        rs.getString("password")
+        rs.getString("password"),
+        (Integer) rs.getObject("check_count")
     );
 
     public Optional<Employee> findById(String id) {
-        String sql = "SELECT * FROM Employee WHERE id_employee = ?";
+        String sql = """
+                SELECT e.*,
+                """ + CHECK_COUNT + """
+                FROM Employee e WHERE e.id_employee = ?
+                """;
         return jdbc.query(sql, EMPLOYEE_MAPPER, id).stream().findFirst();
     }
 
     public List<Employee> findAll() {
-        String sql = "SELECT * FROM Employee ORDER BY empl_surname";
+        String sql = """
+                SELECT e.*,
+                """ + CHECK_COUNT + """
+                FROM Employee e ORDER BY e.empl_surname
+                """;
         return jdbc.query(sql, EMPLOYEE_MAPPER);
     }
 
     public List<Employee> findCashiers() {
-        String sql = "SELECT * FROM Employee WHERE empl_role = 'cashier' ORDER BY empl_surname";
+        String sql = """
+                SELECT e.*,
+                """ + CHECK_COUNT + """
+                FROM Employee e WHERE e.empl_role = 'cashier' ORDER BY e.empl_surname
+                """;
+        return jdbc.query(sql, EMPLOYEE_MAPPER);
+    }
+
+    public List<Employee> findManagers() {
+        String sql = """
+                SELECT e.*,
+                """ + CHECK_COUNT + """
+                FROM Employee e WHERE e.empl_role = 'manager' ORDER BY e.empl_surname
+                """;
         return jdbc.query(sql, EMPLOYEE_MAPPER);
     }
 
     public List<Employee> findBySurname(String surname) {
-        String sql = "SELECT * FROM Employee WHERE empl_surname LIKE ? ORDER BY empl_surname";
+        String sql = """
+                SELECT e.*,
+                """ + CHECK_COUNT + """
+                FROM Employee e WHERE e.empl_surname LIKE ? ORDER BY e.empl_surname
+                """;
         return jdbc.query(sql, EMPLOYEE_MAPPER, surname + "%");
     }
 
@@ -66,10 +96,10 @@ public class EmployeeDao {
 
     public void update(Employee e) {
         String sql = """
-            UPDATE Employee 
-            SET empl_surname = ?, empl_name = ?, empl_patronymic = ?, 
-                empl_role = ?, salary = ?, date_of_birth = ?, 
-                date_of_start = ?, phone_number = ?, city = ?, 
+            UPDATE Employee
+            SET empl_surname = ?, empl_name = ?, empl_patronymic = ?,
+                empl_role = ?, salary = ?, date_of_birth = ?,
+                date_of_start = ?, phone_number = ?, city = ?,
                 street = ?, zip_code = ?
             WHERE id_employee = ?
             """;
@@ -90,19 +120,15 @@ public class EmployeeDao {
         String sql = """
             SELECT e.id_employee, e.empl_surname, e.empl_name, SUM(c.sum_total) as total_sum
             FROM Employee e
-            JOIN "Check" c ON e.id_employee = c.id_employee
+            JOIN "check" c ON e.id_employee = c.id_employee
             WHERE e.id_employee = ? AND c.print_date BETWEEN ? AND ?
             GROUP BY e.id_employee, e.empl_surname, e.empl_name
             """;
-        try {
-            return jdbc.query(sql, (rs, rowNum) -> new CashierSalesResponse(
-                rs.getString("id_employee"),
-                rs.getString("empl_surname"),
-                rs.getString("empl_name"),
-                rs.getBigDecimal("total_sum")
-            ), id, from, to).stream().findFirst();
-        } catch (Exception e) {
-            return Optional.empty();
-        }
+        return jdbc.query(sql, (rs, rowNum) -> new CashierSalesResponse(
+            rs.getString("id_employee"),
+            rs.getString("empl_surname"),
+            rs.getString("empl_name"),
+            rs.getBigDecimal("total_sum")
+        ), id, from, to).stream().findFirst();
     }
 }

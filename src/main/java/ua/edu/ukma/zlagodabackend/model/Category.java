@@ -10,4 +10,6 @@ import lombok.NoArgsConstructor;
 public class Category {
     private Integer categoryNumber;
     private String categoryName;
+    /** Кількість товарів у каталозі (для перевірки перед видаленням категорії) */
+    private Integer productCount;
 }

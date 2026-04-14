@@ -20,25 +20,43 @@ public class CategoryDao {
 
     private final JdbcTemplate jdbcTemplate;
 
+    private static final String COUNT_SUB = """
+            (SELECT COUNT(*)::int FROM Product p WHERE p.category_number = c.category_number) AS product_count
+            """;
+
     private final RowMapper<Category> rowMapper = (rs, rowNum) -> new Category(
             rs.getInt("category_number"),
-            rs.getString("category_name")
+            rs.getString("category_name"),
+            (Integer) rs.getObject("product_count")
     );
 
     public List<Category> findAllSortedByName() {
         String sql = """
-                SELECT *
-                FROM Category
-                ORDER BY category_name ASC
+                SELECT c.category_number, c.category_name,
+                """ + COUNT_SUB + """
+                FROM Category c
+                ORDER BY c.category_name ASC
                 """;
         return jdbcTemplate.query(sql, rowMapper);
     }
 
+    public List<Category> searchByName(String namePart) {
+        String sql = """
+                SELECT c.category_number, c.category_name,
+                """ + COUNT_SUB + """
+                FROM Category c
+                WHERE c.category_name ILIKE ?
+                ORDER BY c.category_name ASC
+                """;
+        return jdbcTemplate.query(sql, rowMapper, "%" + namePart + "%");
+    }
+
     public Optional<Category> findById(Integer id) {
         String sql = """
-                SELECT *
-                FROM Category
-                WHERE category_number = ?
+                SELECT c.category_number, c.category_name,
+                """ + COUNT_SUB + """
+                FROM Category c
+                WHERE c.category_number = ?
                 """;
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(sql, rowMapper, id));
@@ -64,6 +82,7 @@ public class CategoryDao {
         if (keyHolder.getKeys() != null) {
             category.setCategoryNumber((Integer) keyHolder.getKeys().get("category_number"));
         }
+        category.setProductCount(0);
         return category;
     }
 
@@ -82,6 +101,7 @@ public class CategoryDao {
                 FROM Category
                 WHERE category_number = ?
                 """;
+
         jdbcTemplate.update(sql, id);
     }
 }

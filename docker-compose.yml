@@ -12,7 +12,36 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d zlagoda"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zlagoda-net
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zlagoda-api
+    environment:
+      - DB_URL=jdbc:postgresql://postgres:5432/zlagoda
+      - DB_USER=postgres
+      - DB_PASSWORD=secret
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - zlagoda-net
     restart: unless-stopped
 
 volumes:
   postgres_data:
+
+networks:
+  zlagoda-net:
+    external: true

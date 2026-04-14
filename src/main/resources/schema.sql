@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS Customer_Card (
                                percent INT NOT NULL CHECK (percent >= 0)
 );
 
-CREATE TABLE IF NOT EXISTS "Check" (
+CREATE TABLE IF NOT EXISTS "check" (
                          check_number VARCHAR(10) PRIMARY KEY,
                          id_employee VARCHAR(10) NOT NULL,
                          card_number VARCHAR(13),
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS "Check" (
                          sum_total DECIMAL(13,4) NOT NULL CHECK (sum_total >= 0),
                          vat DECIMAL(13,4) NOT NULL CHECK (vat >= 0),
                          FOREIGN KEY (id_employee) REFERENCES Employee(id_employee) ON UPDATE CASCADE ON DELETE NO ACTION,
-                         FOREIGN KEY (card_number) REFERENCES Customer_Card(card_number) ON UPDATE CASCADE ON DELETE SET NULL
+                         FOREIGN KEY (card_number) REFERENCES Customer_Card(card_number) ON UPDATE CASCADE ON DELETE NO ACTION
 );
 
 CREATE TABLE IF NOT EXISTS Sale (
@@ -69,5 +69,5 @@ CREATE TABLE IF NOT EXISTS Sale (
                       selling_price DECIMAL(13,4) NOT NULL CHECK (selling_price >= 0),
                       PRIMARY KEY (UPC, check_number),
                       FOREIGN KEY (UPC) REFERENCES Store_Product(UPC) ON UPDATE CASCADE ON DELETE NO ACTION,
-                      FOREIGN KEY (check_number) REFERENCES "Check"(check_number) ON UPDATE CASCADE ON DELETE CASCADE
+                      FOREIGN KEY (check_number) REFERENCES "check"(check_number) ON UPDATE CASCADE ON DELETE CASCADE
 );

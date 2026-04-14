@@ -17,4 +17,6 @@ public class StoreProductDetailsDto {
     private Boolean promotionalProduct;
     private String productName;
     private String characteristics;
+    /** Рядків у Sale з цим UPC; >0 — видалення заборонене (NO ACTION) */
+    private Integer saleRowsCount;
 }

@@ -14,28 +14,40 @@ import java.util.Optional;
 public class CustomerCardDao {
     private final JdbcTemplate jdbc;
 
+    private static final String SELECT_BASE = """
+            SELECT cc.card_number, cc.cust_surname, cc.cust_name, cc.cust_patronymic,
+                   cc.phone_number, cc.city, cc.street, cc.zip_code, cc.percent,
+                   (SELECT COUNT(*)::int FROM "check" chk WHERE chk.card_number = cc.card_number) AS check_count
+            FROM Customer_Card cc
+            """;
+
     private final RowMapper<CustomerCard> mapper = (rs, rowNum) -> new CustomerCard(
         rs.getString("card_number"), rs.getString("cust_surname"), rs.getString("cust_name"),
         rs.getString("cust_patronymic"), rs.getString("phone_number"), rs.getString("city"),
-        rs.getString("street"), rs.getString("zip_code"), rs.getInt("percent")
+        rs.getString("street"), rs.getString("zip_code"), rs.getInt("percent"),
+        rs.getInt("check_count")
     );
 
     public List<CustomerCard> findAll() {
-        return jdbc.query("SELECT * FROM Customer_Card ORDER BY cust_surname", mapper);
+        return jdbc.query(SELECT_BASE + " ORDER BY cc.cust_surname", mapper);
+    }
+
+    public List<CustomerCard> findAllSortedByPercent() {
+        return jdbc.query(SELECT_BASE + " ORDER BY cc.percent DESC, cc.cust_surname", mapper);
     }
 
     public Optional<CustomerCard> findById(String cardNumber) {
-        String sql = "SELECT * FROM Customer_Card WHERE card_number = ?";
+        String sql = SELECT_BASE + " WHERE cc.card_number = ?";
         return jdbc.query(sql, mapper, cardNumber).stream().findFirst();
     }
 
     public List<CustomerCard> findBySurname(String surname) {
-        String sql = "SELECT * FROM Customer_Card WHERE cust_surname ILIKE ? ORDER BY cust_surname";
+        String sql = SELECT_BASE + " WHERE cc.cust_surname ILIKE ? ORDER BY cc.cust_surname";
         return jdbc.query(sql, mapper, surname + "%");
     }
 
     public List<CustomerCard> findByPercent(int percent) {
-        String sql = "SELECT * FROM Customer_Card WHERE percent = ? ORDER BY cust_surname";
+        String sql = SELECT_BASE + " WHERE cc.percent = ? ORDER BY cc.cust_surname";
         return jdbc.query(sql, mapper, percent);
     }
 
@@ -47,7 +59,7 @@ public class CustomerCardDao {
 
     public void update(CustomerCard c) {
         String sql = """
-                UPDATE Customer_Card SET cust_surname=?, cust_name=?, cust_patronymic=?, 
+                UPDATE Customer_Card SET cust_surname=?, cust_name=?, cust_patronymic=?,
                 phone_number=?, city=?, street=?, zip_code=?, percent=? WHERE card_number=?
                 """;
         jdbc.update(sql, c.getCustSurname(), c.getCustName(), c.getCustPatronymic(),
@@ -60,13 +72,15 @@ public class CustomerCardDao {
 
     public List<CustomerCard> findByProductUpc(String upc) {
         String sql = """
-            SELECT DISTINCT cc.*
-            FROM Customer_Card cc
-            JOIN "Check" c ON cc.card_number = c.card_number
-            JOIN Sale s ON c.check_number = s.check_number
-            WHERE s.upc = ?
-            ORDER BY cc.cust_surname ASC
-            """;
+                SELECT DISTINCT cc.card_number, cc.cust_surname, cc.cust_name, cc.cust_patronymic,
+                       cc.phone_number, cc.city, cc.street, cc.zip_code, cc.percent,
+                       (SELECT COUNT(*)::int FROM "check" chk WHERE chk.card_number = cc.card_number) AS check_count
+                FROM Customer_Card cc
+                JOIN "check" c ON cc.card_number = c.card_number
+                JOIN Sale s ON c.check_number = s.check_number
+                WHERE s.upc = ?
+                ORDER BY cc.cust_surname ASC
+                """;
         return jdbc.query(sql, mapper, upc);
     }
 }

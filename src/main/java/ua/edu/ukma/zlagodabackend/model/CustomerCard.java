@@ -17,4 +17,6 @@ public class CustomerCard {
     private String street;
     private String zipCode;
     private Integer percent;
+    /** Кількість чеків з цією карткою (для перевірки перед видаленням) */
+    private Integer checkCount;
 }

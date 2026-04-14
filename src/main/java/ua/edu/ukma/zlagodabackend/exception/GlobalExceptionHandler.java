@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -52,16 +53,49 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(BusinessValidationException.class)
+    public ResponseEntity<Object> handleBusinessValidation(BusinessValidationException ex) {
+        log.warn("Business validation error: {}", ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<Object> handleInsufficientStock(InsufficientStockException ex) {
+        log.warn("Insufficient stock: {}", ex.getMessage());
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Object> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         log.warn("Data Integrity Violation: {}", ex.getMessage());
-        return buildResponse(HttpStatus.CONFLICT, "Помилка цілісності даних");
+        String message = "Операцію неможливо виконати через пов’язані записи в базі даних.";
+        String m = ex.getMessage() != null ? ex.getMessage() : "";
+        if (m.contains("store_product_upc_prom_fkey")) {
+            message = "Поле «Звичайний UPC» має бути порожнім або вказувати на наявну позицію в магазині.";
+        } else if (m.contains("product_category_number_fkey")) {
+            message = "Неможливо видалити категорію: у каталозі є товари цієї категорії.";
+        } else if (m.contains("store_product_id_product_fkey")) {
+            message = "Неможливо видалити товар: у магазині є позиції (UPC) цього товару.";
+        } else if (m.contains("sale_upc_fkey")) {
+            message = "Неможливо видалити позицію: цей UPC є в історії продажів.";
+        } else if (m.contains("check_id_employee_fkey")) {
+            message = "Неможливо видалити працівника: є чеки, оформлені цим працівником.";
+        } else if (m.contains("check_card_number_fkey")) {
+            message = "Неможливо видалити карту клієнта: є чеки з цією карткою.";
+        }
+        return buildResponse(HttpStatus.CONFLICT, message);
     }
 
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<Object> handleDatabaseExceptions(DataAccessException ex) {
         log.error("Database Error: ", ex);
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Внутрішня помилка бази даних");
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Object> handleBadCredentials(BadCredentialsException ex) {
+        log.warn("Bad credentials: {}", ex.getMessage());
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Невірний ID або пароль");
     }
 
     @ExceptionHandler(Exception.class)

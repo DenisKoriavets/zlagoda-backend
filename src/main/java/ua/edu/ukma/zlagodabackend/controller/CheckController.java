@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import ua.edu.ukma.zlagodabackend.dto.check.CheckCreateRequest;
 import ua.edu.ukma.zlagodabackend.dto.check.CheckDetailsDto;
@@ -30,11 +31,10 @@ public class CheckController {
 
     @GetMapping("/my")
     public List<CheckDetailsDto> getMyChecks(
-            @RequestParam String cashierId,
+            Authentication authentication,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
-
-        return checkService.getChecks(cashierId, from, to);
+        return checkService.getChecks(authentication.getName(), from, to);
     }
 
     @GetMapping("/{number}")
@@ -46,9 +46,8 @@ public class CheckController {
     @ResponseStatus(HttpStatus.CREATED)
     public CheckDetailsDto createCheck(
             @Valid @RequestBody CheckCreateRequest request,
-            @RequestParam String cashierId) {
-
-        return checkService.createCheck(request, cashierId);
+            Authentication authentication) {
+        return checkService.createCheck(request, authentication.getName());
     }
 
     @DeleteMapping("/{number}")

@@ -23,4 +23,6 @@ public class Employee {
     private String street;
     private String zipCode;
     private String password;
+    /** Кількість чеків цього працівника (для перевірки перед видаленням) */
+    private Integer checkCount;
 }

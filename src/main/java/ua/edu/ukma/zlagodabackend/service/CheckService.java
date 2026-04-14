@@ -11,6 +11,7 @@ import ua.edu.ukma.zlagodabackend.dto.check.CheckDetailsDto;
 import ua.edu.ukma.zlagodabackend.dto.saleItem.SaleItemRequest;
 import ua.edu.ukma.zlagodabackend.exception.ResourceNotFoundException;
 import ua.edu.ukma.zlagodabackend.model.Check;
+import ua.edu.ukma.zlagodabackend.model.CustomerCard;
 import ua.edu.ukma.zlagodabackend.model.Sale;
 import ua.edu.ukma.zlagodabackend.model.StoreProduct;
 import ua.edu.ukma.zlagodabackend.util.CheckNumberGenerator;

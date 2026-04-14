@@ -22,10 +22,11 @@ public class CustomerCardController {
     @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
     public List<CustomerCard> getAllCards(
             @RequestParam(required = false) String surname,
-            @RequestParam(required = false) Integer percent) {
+            @RequestParam(required = false) Integer percent,
+            @RequestParam(required = false, defaultValue = "surname") String sort) {
         if (surname != null) return customerCardService.findBySurname(surname);
         if (percent != null) return customerCardService.findByPercent(percent);
-        return customerCardService.findAll();
+        return customerCardService.findAll(sort);
     }
 
     @GetMapping("/{number}")

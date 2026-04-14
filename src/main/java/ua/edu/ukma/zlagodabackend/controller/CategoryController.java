@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ua.edu.ukma.zlagodabackend.dto.category.CategoryRequest;
@@ -27,7 +28,10 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping
-    public List<Category> getAllCategories() {
+    public List<Category> getAllCategories(@RequestParam(required = false) String search) {
+        if (search != null && !search.isBlank()) {
+            return categoryService.searchByName(search.trim());
+        }
         return categoryService.findAllSortedByName();
     }
 
