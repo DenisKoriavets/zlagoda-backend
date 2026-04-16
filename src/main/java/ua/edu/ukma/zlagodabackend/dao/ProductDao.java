@@ -20,10 +20,6 @@ public class ProductDao {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private static final String STORE_COUNT = """
-            (SELECT COUNT(*)::int FROM Store_Product sp WHERE sp.id_product = p.id_product) AS store_product_count
-            """;
-
     private final RowMapper<Product> rowMapper = (rs, rowNum) -> {
         Product p = new Product();
         p.setIdProduct(rs.getInt("id_product"));
@@ -31,49 +27,29 @@ public class ProductDao {
         p.setProductName(rs.getString("product_name"));
         p.setProducer(rs.getString("producer"));
         p.setCharacteristics(rs.getString("characteristics"));
-        p.setStoreProductCount((Integer) rs.getObject("store_product_count"));
         return p;
     };
 
+    // Менеджер п. 9 / Касир п. 1: Отримати усі товари, відсортовані за назвою
     public List<Product> findAllSortedByName() {
-        String sql = """
-                SELECT p.id_product, p.category_number, p.product_name, p.producer, p.characteristics,
-                """ + STORE_COUNT + """
-                FROM Product p
-                ORDER BY p.product_name ASC
-                """;
+        String sql = "SELECT * FROM Product ORDER BY product_name ASC";
         return jdbcTemplate.query(sql, rowMapper);
     }
 
+    // Менеджер п. 13 / Касир п. 5: Товари певної категорії, відсортовані за назвою
     public List<Product> findByCategoryIdSortedByName(Integer categoryId) {
-        String sql = """
-                SELECT p.id_product, p.category_number, p.product_name, p.producer, p.characteristics,
-                """ + STORE_COUNT + """
-                FROM Product p
-                WHERE p.category_number = ?
-                ORDER BY p.product_name ASC
-                """;
+        String sql = "SELECT * FROM Product WHERE category_number = ? ORDER BY product_name ASC";
         return jdbcTemplate.query(sql, rowMapper, categoryId);
     }
 
+    // Касир п. 4: Пошук товарів за назвою
     public List<Product> searchByName(String namePart) {
-        String sql = """
-                SELECT p.id_product, p.category_number, p.product_name, p.producer, p.characteristics,
-                """ + STORE_COUNT + """
-                FROM Product p
-                WHERE p.product_name ILIKE ?
-                ORDER BY p.product_name ASC
-                """;
+        String sql = "SELECT * FROM Product WHERE product_name ILIKE ? ORDER BY product_name ASC";
         return jdbcTemplate.query(sql, rowMapper, "%" + namePart + "%");
     }
 
     public Optional<Product> findById(Integer id) {
-        String sql = """
-                SELECT p.id_product, p.category_number, p.product_name, p.producer, p.characteristics,
-                """ + STORE_COUNT + """
-                FROM Product p
-                WHERE p.id_product = ?
-                """;
+        String sql = "SELECT * FROM Product WHERE id_product = ?";
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(sql, rowMapper, id));
         } catch (EmptyResultDataAccessException e) {
@@ -81,44 +57,29 @@ public class ProductDao {
         }
     }
 
+    // Менеджер п. 1: Введення відомостей про новий товар
     public Product save(Product product) {
-        String sql = """
-                INSERT INTO Product (
-                    category_number,
-                    product_name,
-                    producer,
-                    characteristics
-                ) VALUES (?, ?, ?, ?)
-                """;
-
+        String sql = "INSERT INTO Product (category_number, product_name, producer, characteristics) VALUES (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, product.getCategoryNumber());
-            ps.setString(2, product.getProductName());
+            ps.setString(2, product.getProductName()); // Varchar(50)
             ps.setString(3, product.getProducer());
-            ps.setString(4, product.getCharacteristics());
+            ps.setString(4, product.getCharacteristics()); // Varchar(100)
             return ps;
         }, keyHolder);
 
         if (keyHolder.getKeys() != null) {
             product.setIdProduct((Integer) keyHolder.getKeys().get("id_product"));
         }
-        product.setStoreProductCount(0);
         return product;
     }
 
+    // Менеджер п. 2: Редагувати дані про товари
     public void update(Product product) {
-        String sql = """
-                UPDATE Product
-                SET category_number = ?,
-                    product_name = ?,
-                    producer = ?,
-                    characteristics = ?
-                WHERE id_product = ?
-                """;
-
+        String sql = "UPDATE Product SET category_number = ?, product_name = ?, producer = ?, characteristics = ? WHERE id_product = ?";
         jdbcTemplate.update(sql,
                 product.getCategoryNumber(),
                 product.getProductName(),
@@ -133,13 +94,9 @@ public class ProductDao {
         return n != null ? n : 0;
     }
 
+    // Менеджер п. 3: Вилучити відомості про товар
     public void deleteById(Integer id) {
-        String sql = """
-                DELETE
-                FROM Product
-                WHERE id_product = ?
-                """;
-
+        String sql = "DELETE FROM Product WHERE id_product = ?";
         jdbcTemplate.update(sql, id);
     }
 }

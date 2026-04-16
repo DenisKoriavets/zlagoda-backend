@@ -1,98 +1,93 @@
 package ua.edu.ukma.zlagodabackend.dao;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import ua.edu.ukma.zlagodabackend.dto.employee.CashierSalesResponse;
+import ua.edu.ukma.zlagodabackend.model.Employee;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import ua.edu.ukma.zlagodabackend.model.Employee;
-
 @Repository
+@RequiredArgsConstructor
 public class EmployeeDao {
 
     private final JdbcTemplate jdbc;
 
-    private static final String CHECK_COUNT = """
-            (SELECT COUNT(*)::int FROM "check" c WHERE c.id_employee = e.id_employee) AS check_count
-            """;
-
-    public EmployeeDao(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
-    }
-
     private static final RowMapper<Employee> EMPLOYEE_MAPPER = (rs, rowNum) -> new Employee(
-        rs.getString("id_employee"),
-        rs.getString("empl_surname"),
-        rs.getString("empl_name"),
-        rs.getString("empl_patronymic"),
-        rs.getString("empl_role"),
-        rs.getBigDecimal("salary"),
-        rs.getDate("date_of_birth").toLocalDate(),
-        rs.getDate("date_of_start").toLocalDate(),
-        rs.getString("phone_number"),
-        rs.getString("city"),
-        rs.getString("street"),
-        rs.getString("zip_code"),
-        rs.getString("password"),
-        (Integer) rs.getObject("check_count")
+            rs.getString("id_employee"),
+            rs.getString("empl_surname"),
+            rs.getString("empl_name"),
+            rs.getString("empl_patronymic"),
+            rs.getString("empl_role"),
+            rs.getBigDecimal("salary"),
+            rs.getDate("date_of_birth").toLocalDate(),
+            rs.getDate("date_of_start").toLocalDate(),
+            rs.getString("phone_number"),
+            rs.getString("city"),
+            rs.getString("street"),
+            rs.getString("zip_code"),
+            rs.getString("password"),
+            0
     );
 
-    public Optional<Employee> findById(String id) {
-        String sql = """
-                SELECT e.*,
-                """ + CHECK_COUNT + """
-                FROM Employee e WHERE e.id_employee = ?
-                """;
-        return jdbc.query(sql, EMPLOYEE_MAPPER, id).stream().findFirst();
-    }
-
-    public List<Employee> findAll() {
-        String sql = """
-                SELECT e.*,
-                """ + CHECK_COUNT + """
-                FROM Employee e ORDER BY e.empl_surname
-                """;
+    // Менеджер п. 4: Отримати інформацію про усіх працівників, відсортованих за прізвищем
+    public List<Employee> findAllSortedBySurname() {
+        String sql = "SELECT * FROM Employee ORDER BY empl_surname ASC";
         return jdbc.query(sql, EMPLOYEE_MAPPER);
     }
 
-    public List<Employee> findCashiers() {
-        String sql = """
-                SELECT e.*,
-                """ + CHECK_COUNT + """
-                FROM Employee e WHERE e.empl_role = 'cashier' ORDER BY e.empl_surname
-                """;
+    // Менеджер п. 5: Отримати інформацію про усіх касирів, відсортованих за прізвищем
+    public List<Employee> findCashiersSortedBySurname() {
+        String sql = "SELECT * FROM Employee WHERE empl_role = 'CASHIER' ORDER BY empl_surname ASC";
         return jdbc.query(sql, EMPLOYEE_MAPPER);
     }
 
-    public List<Employee> findManagers() {
-        String sql = """
-                SELECT e.*,
-                """ + CHECK_COUNT + """
-                FROM Employee e WHERE e.empl_role = 'manager' ORDER BY e.empl_surname
-                """;
-        return jdbc.query(sql, EMPLOYEE_MAPPER);
-    }
-
+    // Менеджер п. 11: Пошук за прізвищем (для контактів)
     public List<Employee> findBySurname(String surname) {
-        String sql = """
-                SELECT e.*,
-                """ + CHECK_COUNT + """
-                FROM Employee e WHERE e.empl_surname LIKE ? ORDER BY e.empl_surname
-                """;
+        String sql = "SELECT * FROM Employee WHERE empl_surname LIKE ? ORDER BY empl_surname ASC";
         return jdbc.query(sql, EMPLOYEE_MAPPER, surname + "%");
     }
 
-    public void save(Employee e) {
-        String sql = "INSERT INTO Employee (id_employee, empl_surname, empl_name, empl_patronymic, " +
-            "empl_role, salary, date_of_birth, date_of_start, phone_number, city, street, zip_code, password) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        jdbc.update(sql, e.getIdEmployee(), e.getEmplSurname(), e.getEmplName(), e.getEmplPatronymic(),
-            e.getEmplRole(), e.getSalary(), e.getDateOfBirth(), e.getDateOfStart(), e.getPhoneNumber(),
-            e.getCity(), e.getStreet(), e.getZipCode(), e.getPassword());
+    public Optional<Employee> findById(String id) {
+        String sql = "SELECT * FROM Employee WHERE id_employee = ?";
+        return jdbc.query(sql, EMPLOYEE_MAPPER, id).stream().findFirst();
     }
 
+    // Менеджер п. 19: Визначити загальну суму проданих товарів певним касиром за період
+    public Optional<CashierSalesResponse> getTotalSalesByCashier(String id, LocalDateTime from, LocalDateTime to) {
+        String sql = """
+            SELECT e.id_employee, e.empl_surname, e.empl_name, COALESCE(SUM(c.sum_total), 0) as total_sum
+            FROM Employee e
+            LEFT JOIN "Check" c ON e.id_employee = c.id_employee
+            WHERE e.id_employee = ? AND c.print_date BETWEEN ? AND ?
+            GROUP BY e.id_employee, e.empl_surname, e.empl_name
+            """;
+        return jdbc.query(sql, (rs, rowNum) -> new CashierSalesResponse(
+                rs.getString("id_employee"),
+                rs.getString("empl_surname"),
+                rs.getString("empl_name"),
+                rs.getBigDecimal("total_sum")
+        ), id, from, to).stream().findFirst();
+    }
+
+    // Менеджер п. 1: Введення відомостей про нового працівника
+    public void save(Employee e) {
+        String sql = """
+            INSERT INTO Employee (id_employee, empl_surname, empl_name, empl_patronymic, 
+            empl_role, salary, date_of_birth, date_of_start, phone_number, city, street, zip_code, password) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """;
+        jdbc.update(sql, e.getIdEmployee(), e.getEmplSurname(), e.getEmplName(), e.getEmplPatronymic(),
+                e.getEmplRole(), e.getSalary(), e.getDateOfBirth(), e.getDateOfStart(), e.getPhoneNumber(),
+                e.getCity(), e.getStreet(), e.getZipCode(), e.getPassword());
+    }
+
+    // Менеджер п. 2: Редагувати дані про працівників
     public void update(Employee e) {
         String sql = """
             UPDATE Employee
@@ -103,13 +98,14 @@ public class EmployeeDao {
             WHERE id_employee = ?
             """;
         jdbc.update(sql,
-            e.getEmplSurname(), e.getEmplName(), e.getEmplPatronymic(),
-            e.getEmplRole(), e.getSalary(), e.getDateOfBirth(),
-            e.getDateOfStart(), e.getPhoneNumber(), e.getCity(),
-            e.getStreet(), e.getZipCode(), e.getIdEmployee()
+                e.getEmplSurname(), e.getEmplName(), e.getEmplPatronymic(),
+                e.getEmplRole(), e.getSalary(), e.getDateOfBirth(),
+                e.getDateOfStart(), e.getPhoneNumber(), e.getCity(),
+                e.getStreet(), e.getZipCode(), e.getIdEmployee()
         );
     }
 
+    // Менеджер п. 3: Вилучити відомості про працівника
     public void delete(String id) {
         String sql = "DELETE FROM Employee WHERE id_employee = ?";
         jdbc.update(sql, id);
