@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ua.edu.ukma.zlagodabackend.dto.employee.CashierSalesResponse;
+import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeContactResponse;
 import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeCreateRequest;
 import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeUpdateRequest;
 import ua.edu.ukma.zlagodabackend.model.Employee;
@@ -24,7 +25,6 @@ import ua.edu.ukma.zlagodabackend.service.EmployeeService;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/employees")
@@ -33,63 +33,7 @@ public class EmployeeController {
 
     private final EmployeeService employeeService;
 
-    @GetMapping
-    @PreAuthorize("hasRole('MANAGER')")
-    public List<Employee> getAllEmployees(
-            @RequestParam(required = false) String role,
-            @RequestParam(required = false) String surname) {
-        if (role != null && !role.isBlank()) {
-            return employeeService.findByRole(role);
-        }
-        if (surname != null && !surname.isBlank()) {
-            return employeeService.findBySurname(surname.trim());
-        }
-        return employeeService.findAll();
-    }
-
-    @GetMapping("/me")
-    @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
-    public Employee getMyProfile(Authentication authentication) {
-        return employeeService.findById(authentication.getName());
-    }
-
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
-    public Employee getEmployeeById(@PathVariable String id) {
-        return employeeService.findById(id);
-    }
-
-    @GetMapping("/sorted-by-surname")
-    @PreAuthorize("hasRole('MANAGER')")
-    public List<Employee> getEmployeesSortedBySurname() {
-        return employeeService.findAll();
-    }
-
-    @GetMapping("/cashiers/sorted-by-surname")
-    @PreAuthorize("hasRole('MANAGER')")
-    public List<Employee> getCashiersSortedBySurname() {
-        return employeeService.findCashiers();
-    }
-
-    @GetMapping("/search-by-surname/{surname}")
-    @PreAuthorize("hasRole('MANAGER')")
-    public List<Employee> searchEmployeesBySurname(@PathVariable String surname) {
-        return employeeService.findBySurname(surname.trim());
-    }
-
-    @GetMapping("/search-by-surname/{surname}/contacts")
-    @PreAuthorize("hasRole('MANAGER')")
-    public List<Map<String, String>> searchEmployeeContactsBySurname(@PathVariable String surname) {
-        return employeeService.findBySurname(surname.trim()).stream()
-                .map(e -> Map.of(
-                        "idEmployee", e.getIdEmployee(),
-                        "fullName", String.join(" ", e.getEmplSurname(), e.getEmplName()),
-                        "phoneNumber", e.getPhoneNumber(),
-                        "address", String.join(", ", e.getCity(), e.getStreet(), e.getZipCode())
-                ))
-                .toList();
-    }
-
+    // Введення (Менеджер, п. 1)
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('MANAGER')")
@@ -97,12 +41,14 @@ public class EmployeeController {
         return employeeService.create(request);
     }
 
+    // Оновлення (Менеджер, п. 2)
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER')")
     public Employee updateEmployee(@PathVariable String id, @Valid @RequestBody EmployeeUpdateRequest request) {
         return employeeService.update(id, request);
     }
 
+    // Вилучення (Менеджер, п. 3)
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('MANAGER')")
@@ -110,12 +56,41 @@ public class EmployeeController {
         employeeService.delete(id);
     }
 
+    // Менеджер, п. 4: Отримати інформацію про усіх працівників, відсортованих за прізвищем
+    @GetMapping("/sorted-by-surname")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<Employee> getEmployeesSortedBySurname() {
+        return employeeService.findAllSortedBySurname();
+    }
+
+    // Менеджер, п. 5: Отримати інформацію про усіх працівників, що займають посаду касира, відсортованих за прізвищем
+    @GetMapping("/cashiers/sorted-by-surname")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<Employee> getCashiersSortedBySurname() {
+        return employeeService.findCashiersSortedBySurname();
+    }
+
+    // Менеджер, п. 11: За прізвищем працівника знайти його телефон та адресу
+    @GetMapping("/contacts/{surname}")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<EmployeeContactResponse> searchEmployeeContactsBySurname(@PathVariable String surname) {
+        return employeeService.findContactsBySurname(surname.trim());
+    }
+
+    // Менеджер, п. 19: Визначити загальну суму проданих товарів з чеків, створених певним касиром за певний період часу
     @GetMapping("/{id}/sales")
-    @PreAuthorize("hasRole('MANAGER')") // Звіти — тільки для менеджерів
+    @PreAuthorize("hasRole('MANAGER')")
     public CashierSalesResponse getCashierSalesReport(
             @PathVariable String id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
         return employeeService.getCashierSales(id, from, to);
+    }
+
+    // Касир, п. 15: Можливість отримати усю інформацію про себе
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
+    public Employee getMyProfile(Authentication authentication) {
+        return employeeService.findById(authentication.getName());
     }
 }
