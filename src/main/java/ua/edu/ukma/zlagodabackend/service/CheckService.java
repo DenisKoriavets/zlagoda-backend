@@ -92,14 +92,6 @@ public class CheckService {
         return getCheckDetails(checkNumber);
     }
 
-    public List<CheckDetailsDto> getAllChecksSortedByPrintDateDesc() {
-        return checkDao.findAllWithFilters(null, null, null);
-    }
-
-    public List<CheckDetailsDto> getChecksByCashierSortedByPrintDateDesc(String cashierId) {
-        return checkDao.findAllWithFilters(cashierId, null, null);
-    }
-
     public List<CheckDetailsDto> getChecksByCashierAndPeriod(String cashierId, LocalDateTime from, LocalDateTime to) {
         return checkDao.findByCashierAndPeriod(cashierId, from, to);
     }

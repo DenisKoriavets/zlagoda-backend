@@ -22,16 +22,6 @@ public class CustomerCardService {
         return customerCardDao.findAll();
     }
 
-    public List<CustomerCard> findAll(String sort) {
-        if ("surname".equalsIgnoreCase(sort)) {
-            return customerCardDao.findAll();
-        }
-        if ("percent".equalsIgnoreCase(sort)) {
-            return customerCardDao.findAllSortedByPercent();
-        }
-        throw new BusinessValidationException("Невірне значення sort. Дозволено: surname, percent");
-    }
-
     public CustomerCard findById(String cardNumber) {
         return customerCardDao.findById(cardNumber)
             .orElseThrow(() -> new ResourceNotFoundException(
@@ -67,10 +57,6 @@ public class CustomerCardService {
                     "Неможливо видалити карту клієнта: є чеки з цією карткою.");
         }
         customerCardDao.delete(cardNumber);
-    }
-
-    public List<CustomerCard> getCustomersByProduct(String upc) {
-        return customerCardDao.findByProductUpc(upc);
     }
 
     private CustomerCard mapToEntity(CustomerCardRequest request) {

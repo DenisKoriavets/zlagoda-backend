@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ua.edu.ukma.zlagodabackend.dto.customer.CustomerCardRequest;
@@ -27,15 +26,12 @@ public class CustomerCardController {
 
     private final CustomerCardService customerCardService;
 
+    // Менеджер (Вимога 7) / Касир (Вимога 3):
+    // Отримати інформацію про усіх постійних клієнтів, відсортованих за прізвищем
     @GetMapping
     @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
-    public List<CustomerCard> getAllCards(
-            @RequestParam(required = false) String surname,
-            @RequestParam(required = false) Integer percent,
-            @RequestParam(required = false, defaultValue = "surname") String sort) {
-        if (surname != null) return customerCardService.findBySurname(surname);
-        if (percent != null) return customerCardService.findByPercent(percent);
-        return customerCardService.findAll(sort);
+    public List<CustomerCard> getAllCards() {
+        return customerCardService.findAll();
     }
 
     @GetMapping("/{number}")
@@ -44,30 +40,22 @@ public class CustomerCardController {
         return customerCardService.findById(number);
     }
 
-    @GetMapping("/sorted-by-surname")
-    @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
-    public List<CustomerCard> getCardsSortedBySurname() {
-        return customerCardService.findAll();
-    }
-
-    @GetMapping("/sorted-by-percent")
-    @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
-    public List<CustomerCard> getCardsSortedByPercent() {
-        return customerCardService.findAll("percent");
-    }
-
+    // Касир (Вимога 6): Здійснити пошук постійних клієнтів за прізвищем
     @GetMapping("/search-by-surname/{surname}")
     @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
     public List<CustomerCard> searchCardsBySurname(@PathVariable String surname) {
         return customerCardService.findBySurname(surname.trim());
     }
 
+    // Менеджер (Вимога 12): Отримати інформацію про усіх постійних клієнтів,
+    // що мають карту клієнта із певним відсотком, посортованих за прізвищем
     @GetMapping("/by-percent/{percent}/sorted-by-surname")
     @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
     public List<CustomerCard> getCardsByPercentSortedBySurname(@PathVariable Integer percent) {
         return customerCardService.findByPercent(percent);
     }
 
+    // Менеджер (Вимога 1) / Касир (Вимога 8): Додавати дані про клієнтів
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
@@ -75,22 +63,18 @@ public class CustomerCardController {
         return customerCardService.create(request);
     }
 
+    // Менеджер (Вимога 2) / Касир (Вимога 8): Редагувати дані про клієнтів
     @PutMapping("/{number}")
     @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
     public CustomerCard updateCard(@PathVariable String number, @Valid @RequestBody CustomerCardRequest request) {
         return customerCardService.update(number, request);
     }
 
+    // Менеджер (Вимога 3): Видаляти дані про клієнтів
     @DeleteMapping("/{number}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('MANAGER')")
     public void deleteCard(@PathVariable String number) {
         customerCardService.delete(number);
-    }
-
-    @GetMapping("/by-product/{upc}")
-    @PreAuthorize("hasRole('MANAGER')")
-    public List<CustomerCard> getCustomersByProduct(@PathVariable String upc) {
-        return customerCardService.getCustomersByProduct(upc);
     }
 }
