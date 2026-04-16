@@ -1,18 +1,19 @@
 package ua.edu.ukma.zlagodabackend.service;
 
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.edu.ukma.zlagodabackend.dao.SaleDao;
 import ua.edu.ukma.zlagodabackend.dao.StoreProductDao;
-import ua.edu.ukma.zlagodabackend.dto.storeProduct.StoreProductDetailsDto;
+import ua.edu.ukma.zlagodabackend.dto.storeProduct.StoreProductCashierResponse;
+import ua.edu.ukma.zlagodabackend.dto.storeProduct.StoreProductFullResponse;
 import ua.edu.ukma.zlagodabackend.dto.storeProduct.StoreProductRequest;
 import ua.edu.ukma.zlagodabackend.exception.BusinessValidationException;
 import ua.edu.ukma.zlagodabackend.exception.ResourceNotFoundException;
 import ua.edu.ukma.zlagodabackend.model.StoreProduct;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,249 +25,201 @@ public class StoreProductService {
     private final ProductService productService;
     private final SaleDao saleDao;
 
-    public List<StoreProductDetailsDto> findAll(Boolean isPromotional, Integer category, String search, String sortBy) {
-        return storeProductDao.findAllWithFilters(isPromotional, category, search, sortBy);
+    private static final BigDecimal PROMO_DISCOUNT_FACTOR = new BigDecimal("0.8");
+
+    public List<StoreProductFullResponse> findAllSortedByName() {
+        return storeProductDao.findAllSortedByName();
     }
 
-    public List<StoreProductDetailsDto> searchByNameOrUpcAllSortedByName(String query) {
-        return storeProductDao.findAllWithFilters(null, null, validateSearchQuery(query), "name");
+    // Менеджер п. 10: Усі товари у магазині, посортовані за кількістю
+    public List<StoreProductFullResponse> findAllSortedByQuantity() {
+        return storeProductDao.findAllSortedByQuantity();
     }
 
-    public List<StoreProductDetailsDto> searchByNameOrUpcAllSortedByQuantity(String query) {
-        return storeProductDao.findAllWithFilters(null, null, validateSearchQuery(query), "quantity");
+    // Менеджер п. 15 / Касир п. 12: Акційні товари (сортування за назвою)
+    public List<StoreProductFullResponse> findPromotionalSortedByName() {
+        return storeProductDao.findPromotionalSortedByName();
     }
 
-    public List<StoreProductDetailsDto> searchByNameOrUpcPromotionalSortedByName(String query) {
-        return storeProductDao.findAllWithFilters(true, null, validateSearchQuery(query), "name");
+    // Менеджер п. 15 / Касир п. 12: Акційні товари (сортування за кількістю)
+    public List<StoreProductFullResponse> findPromotionalSortedByQuantity() {
+        return storeProductDao.findPromotionalSortedByQuantity();
     }
 
-    public List<StoreProductDetailsDto> searchByNameOrUpcPromotionalSortedByQuantity(String query) {
-        return storeProductDao.findAllWithFilters(true, null, validateSearchQuery(query), "quantity");
+    // Менеджер п. 16 / Касир п. 13: Не акційні товари (сортування за назвою)
+    public List<StoreProductFullResponse> findNonPromotionalSortedByName() {
+        return storeProductDao.findNonPromotionalSortedByName();
     }
 
-    public List<StoreProductDetailsDto> searchByNameOrUpcNonPromotionalSortedByName(String query) {
-        return storeProductDao.findAllWithFilters(false, null, validateSearchQuery(query), "name");
+    // Менеджер п. 16 / Касир п. 13: Не акційні товари (сортування за кількістю)
+    public List<StoreProductFullResponse> findNonPromotionalSortedByQuantity() {
+        return storeProductDao.findNonPromotionalSortedByQuantity();
     }
 
-    public List<StoreProductDetailsDto> searchByNameOrUpcNonPromotionalSortedByQuantity(String query) {
-        return storeProductDao.findAllWithFilters(false, null, validateSearchQuery(query), "quantity");
+    // Менеджер п. 14: Повна інформація за UPC
+    public StoreProductFullResponse findFullDetailsByUpc(String upc) {
+        return storeProductDao.findFullDetailsByUpc(upc)
+                .orElseThrow(() -> new ResourceNotFoundException("UPC " + upc + " не знайдено"));
     }
 
-    private static String validateSearchQuery(String query) {
-        if (query == null || query.isBlank()) {
-            throw new BusinessValidationException("Пошуковий рядок не може бути порожнім.");
-        }
-        return query.trim();
-    }
-
-    public StoreProductDetailsDto findDetailsByUpc(String upc) {
-        return storeProductDao.findDetailsByUpc(upc)
-                .orElseThrow(() -> new ResourceNotFoundException("Товар у магазині з UPC " + upc + " не знайдено"));
-    }
-
-    public StoreProduct findEntityByUpc(String upc) {
-        return storeProductDao.findEntityByUpc(upc)
-                .orElseThrow(() -> new ResourceNotFoundException("Товар з UPC " + upc + " не знайдено"));
+    // Касир п. 14: Обмежена інформація за UPC (CQRS-підхід)
+    public StoreProductCashierResponse findCashierInfoByUpc(String upc) {
+        return storeProductDao.findCashierInfoByUpc(upc)
+                .orElseThrow(() -> new ResourceNotFoundException("UPC " + upc + " не знайдено"));
     }
 
     @Transactional
     public StoreProduct create(StoreProductRequest request) {
-        validateRequestRecursiveFields(request);
         productService.findById(request.idProduct());
 
-        BigDecimal finalPrice;
-
-        if (request.promotionalProduct()) {
-            validateMaxTwoPerProduct(request.idProduct(), true, null);
-            Optional<StoreProduct> regularOpt = storeProductDao.findByProductAndPromo(request.idProduct(), false);
-            if (regularOpt.isEmpty()) {
-                throw new BusinessValidationException(
-                    "Щоб створити акційний товар, спочатку має існувати звичайний товар для цього продукту.");
-            }
-            StoreProduct regular = regularOpt.get();
-            finalPrice = regular.getSellingPrice().multiply(new BigDecimal("0.8"));
-            if (regular.getUpcProm() != null) {
-                throw new BusinessValidationException("Для цього товару вже прив'язаний акційний UPC.");
-            }
-
-            StoreProduct sp = new StoreProduct(
-                    request.upc(), null, request.idProduct(),
-                    finalPrice, request.productsNumber(), true);
-            storeProductDao.save(sp);
-
-            regular.setUpcProm(request.upc());
-            storeProductDao.update(regular);
-            validateRecursiveIntegrity(sp);
-            validateRecursiveIntegrity(regular);
-
-            return sp;
+        if (Boolean.TRUE.equals(request.promotionalProduct())) {
+            return createPromotionalProduct(request);
         } else {
-            if (request.sellingPrice() == null || request.sellingPrice().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new BusinessValidationException("Ціна продажу є обов'язковою для звичайного товару та має бути > 0.");
-            }
-            Optional<StoreProduct> existingRegular = storeProductDao.findByProductAndPromo(request.idProduct(), false);
-            if (existingRegular.isPresent()) {
-                StoreProduct reg = existingRegular.get();
-                if (!reg.getUpc().equals(request.upc())) {
-                    throw new BusinessValidationException(
-                            "Для цього товару вже є звичайна позиція в магазині (UPC: " + reg.getUpc() + "). "
-                                    + "Нова партія з новою ціною: вкажіть той самий UPC — додана кількість підсумується, "
-                                    + "увесь наявний залишок переоцінюється на нову ціну продажу.");
-                }
-                int mergedQty = reg.getProductsNumber() + request.productsNumber();
-                reg.setSellingPrice(request.sellingPrice());
-                reg.setProductsNumber(mergedQty);
-                storeProductDao.update(reg);
-
-                storeProductDao.findByProductAndPromo(request.idProduct(), true).ifPresent(promo -> {
-                    BigDecimal newPromoPrice = request.sellingPrice().multiply(new BigDecimal("0.8"));
-                    promo.setSellingPrice(newPromoPrice);
-                    storeProductDao.update(promo);
-                    validateRecursiveIntegrity(promo);
-                });
-                validateRecursiveIntegrity(reg);
-                return reg;
-            }
-
-            validateMaxTwoPerProduct(request.idProduct(), false, null);
-            finalPrice = request.sellingPrice();
-            StoreProduct sp = new StoreProduct(
-                    request.upc(), null, request.idProduct(),
-                    finalPrice, request.productsNumber(), false);
-            storeProductDao.save(sp);
-
-            storeProductDao.findByProductAndPromo(request.idProduct(), true).ifPresent(promo -> {
-                if (promo.getIdProduct().equals(sp.getIdProduct())) {
-                    sp.setUpcProm(promo.getUpc());
-                    storeProductDao.update(sp);
-                }
-                BigDecimal newPromoPrice = finalPrice.multiply(new BigDecimal("0.8"));
-                promo.setSellingPrice(newPromoPrice);
-                storeProductDao.update(promo);
-            });
-            validateRecursiveIntegrity(sp);
-
-            return sp;
+            return processRegularProductRestock(request);
         }
     }
 
     @Transactional
     public StoreProduct update(String upc, StoreProductRequest request) {
         StoreProduct existing = findEntityByUpc(upc);
-        validateRequestRecursiveFields(request);
-        validateRecursiveIntegrity(existing);
 
-        if (!existing.getIdProduct().equals(request.idProduct())) {
-            productService.findById(request.idProduct());
-            validateSafeProductChange(existing, request.idProduct());
-        }
+        validateConstraints(request, upc);
 
         existing.setProductsNumber(request.productsNumber());
-        existing.setIdProduct(request.idProduct());
 
         if (!existing.getPromotionalProduct()) {
-            BigDecimal newPrice = request.sellingPrice() != null ? request.sellingPrice() : existing.getSellingPrice();
-            if (newPrice.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new BusinessValidationException("Ціна продажу для звичайного товару має бути > 0.");
-            }
-            existing.setSellingPrice(newPrice);
-            storeProductDao.update(existing);
+            existing.setSellingPrice(request.sellingPrice());
 
             storeProductDao.findByProductAndPromo(existing.getIdProduct(), true).ifPresent(promo -> {
-                promo.setSellingPrice(newPrice.multiply(new BigDecimal("0.8")));
+                BigDecimal newPromoPrice = request.sellingPrice().multiply(PROMO_DISCOUNT_FACTOR);
+                promo.setSellingPrice(newPromoPrice);
                 storeProductDao.update(promo);
-                validateRecursiveIntegrity(promo);
             });
         } else {
-            existing.setUpcProm(null);
-            storeProductDao.update(existing);
+            storeProductDao.findByProductAndPromo(existing.getIdProduct(), false)
+                    .ifPresentOrElse(
+                            regular -> existing.setSellingPrice(regular.getSellingPrice().multiply(PROMO_DISCOUNT_FACTOR)),
+                            () -> existing.setSellingPrice(request.sellingPrice())
+                    );
         }
 
-        validateRecursiveIntegrity(existing);
-
+        storeProductDao.update(existing);
         return existing;
     }
 
-    public int getTotalSoldQuantity(String upc, LocalDateTime from, LocalDateTime to) {
-        findEntityByUpc(upc);
-        return saleDao.getTotalQuantitySold(upc, from, to);
-    }
-
+    @Transactional
     public void delete(String upc) {
-        StoreProduct existing = findEntityByUpc(upc);
-        int sales = saleDao.countRowsByUpc(upc);
-        if (sales > 0) {
-            throw new BusinessValidationException(
-                    "Неможливо видалити позицію: цей UPC є в історії продажів (чеки не змінюються).");
+        StoreProduct sp = findEntityByUpc(upc);
+
+        if (saleDao.countRowsByUpc(upc) > 0) {
+            throw new BusinessValidationException("Неможливо видалити товар за UPC: він фігурує в реальних чеках.");
         }
-        if (!existing.getPromotionalProduct() && existing.getUpcProm() != null) {
-            throw new BusinessValidationException(
-                    "Неможливо видалити звичайний UPC, поки до нього прив'язаний акційний UPC. "
-                            + "Спочатку видаліть або змініть акційний.");
-        }
+
         storeProductDao.deleteByUpc(upc);
     }
 
-    private void validateMaxTwoPerProduct(Integer idProduct, boolean isPromo, String excludeUpc) {
-        Optional<StoreProduct> existing = storeProductDao.findByProductAndPromo(idProduct, isPromo);
-        if (existing.isPresent() && (excludeUpc == null || !existing.get().getUpc().equals(excludeUpc))) {
-            String type = isPromo ? "акційний" : "звичайний";
-            throw new BusinessValidationException(
-                "Для цього продукту вже існує " + type + " товар у магазині (UPC: " + existing.get().getUpc() + ").");
+    // Менеджер п. 21: Загальна кількість одиниць певного товару, проданого за період
+    public int getTotalSoldQuantity(String upc, LocalDateTime from, LocalDateTime to) {
+        return saleDao.getTotalQuantitySold(upc, from, to);
+    }
+
+
+    private void validateConstraints(StoreProductRequest request, String currentUpc) {
+        storeProductDao.findByProductAndPromo(request.idProduct(), request.promotionalProduct())
+                .ifPresent(existing -> {
+                    if (currentUpc == null || !existing.getUpc().equals(currentUpc)) {
+                        String type = request.promotionalProduct() ? "акційна" : "звичайна";
+                        throw new BusinessValidationException(
+                                "Для цього продукту вже існує " + type + " позиція (UPC: " + existing.getUpc() + "). " +
+                                        "Обмеження моделі: максимум 2 позиції на товар (1 звичайна + 1 акційна).");
+                    }
+                });
+
+        if (request.upc() != null && request.upc().length() > 12) {
+            throw new BusinessValidationException("UPC не може перевищувати 12 символів.");
+        }
+
+        if (request.sellingPrice() != null && request.sellingPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessValidationException("Ціна продажу не може бути від'ємною.");
+        }
+        if (request.productsNumber() != null && request.productsNumber() < 0) {
+            throw new BusinessValidationException("Кількість товарів не може бути від'ємною.");
         }
     }
 
-    private void validateRequestRecursiveFields(StoreProductRequest request) {
-        if (request.upc() == null || request.upc().isBlank()) {
-            return;
+    @Transactional
+    protected StoreProduct processRegularProductRestock(StoreProductRequest request) {
+        Optional<StoreProduct> existingRegular = storeProductDao.findByProductAndPromo(request.idProduct(), false);
+
+        if (existingRegular.isPresent()) {
+            StoreProduct reg = existingRegular.get();
+            if (!reg.getUpc().equals(request.upc())) {
+                throw new BusinessValidationException("Використовуйте UPC: " + reg.getUpc() + " для цього товару.");
+            }
+            reg.setSellingPrice(request.sellingPrice());
+            reg.setProductsNumber(reg.getProductsNumber() + request.productsNumber());
+            storeProductDao.update(reg);
+
+            storeProductDao.findByProductAndPromo(reg.getIdProduct(), true).ifPresent(promo -> {
+                promo.setSellingPrice(request.sellingPrice().multiply(new BigDecimal("0.8")));
+                storeProductDao.update(promo);
+            });
+            return reg;
         }
-        if (request.upc().equals(request.upcProm())) {
-            throw new BusinessValidationException("UPC не може посилатися сам на себе через upcProm.");
-        }
-        if (Boolean.TRUE.equals(request.promotionalProduct()) && request.upcProm() != null) {
-            throw new BusinessValidationException("Для акційного товару поле upcProm має бути порожнім.");
-        }
+
+        StoreProduct newReg = new StoreProduct(
+                request.upc(),
+                null,
+                request.idProduct(),
+                request.sellingPrice(),
+                request.productsNumber(),
+                false
+        );
+
+        storeProductDao.findByProductAndPromo(request.idProduct(), true)
+                .ifPresent(promo -> newReg.setUpcProm(promo.getUpc()));
+
+        storeProductDao.save(newReg);
+        return newReg;
     }
 
-    private void validateRecursiveIntegrity(StoreProduct storeProduct) {
-        if (Boolean.TRUE.equals(storeProduct.getPromotionalProduct())) {
-            if (storeProduct.getUpcProm() != null) {
-                throw new BusinessValidationException("Акційний UPC не може мати upcProm.");
-            }
-            Optional<StoreProduct> regular = storeProductDao.findRegularLinkedToPromo(storeProduct.getUpc());
-            if (regular.isPresent() && !regular.get().getIdProduct().equals(storeProduct.getIdProduct())) {
-                throw new BusinessValidationException("Пара звичайний/акційний UPC повинна належати одному id_product.");
-            }
-            return;
+    @Transactional
+    protected StoreProduct createPromotionalProduct(StoreProductRequest request) {
+        storeProductDao.findByProductAndPromo(request.idProduct(), true).ifPresent(p -> {
+            throw new BusinessValidationException("Акційна позиція для товару " + request.idProduct()
+                    + " вже існує (UPC: " + p.getUpc() + ")");
+        });
+
+        Optional<StoreProduct> regularOpt = storeProductDao.findByProductAndPromo(request.idProduct(), false);
+
+        BigDecimal finalPrice;
+        if (regularOpt.isPresent()) {
+            finalPrice = regularOpt.get().getSellingPrice().multiply(new BigDecimal("0.8"));
+        } else {
+            if (request.sellingPrice() == null) throw new BusinessValidationException("Необхідно вказати ціну для створення акційної позиції.");
+            finalPrice = request.sellingPrice();
         }
 
-        String linkedPromoUpc = storeProduct.getUpcProm();
-        if (linkedPromoUpc == null || linkedPromoUpc.isBlank()) {
-            return;
-        }
-        StoreProduct linkedPromo = findEntityByUpc(linkedPromoUpc);
-        if (!Boolean.TRUE.equals(linkedPromo.getPromotionalProduct())) {
-            throw new BusinessValidationException("upcProm має посилатися тільки на акційний UPC.");
-        }
-        if (!linkedPromo.getIdProduct().equals(storeProduct.getIdProduct())) {
-            throw new BusinessValidationException("Пара звичайний/акційний UPC повинна належати одному id_product.");
-        }
+        StoreProduct promo = new StoreProduct(
+                request.upc(),
+                null,
+                request.idProduct(),
+                finalPrice,
+                request.productsNumber(),
+                true
+        );
+        storeProductDao.save(promo);
+
+        regularOpt.ifPresent(reg -> {
+            reg.setUpcProm(promo.getUpc());
+            storeProductDao.update(reg);
+        });
+
+        return promo;
     }
 
-    private void validateSafeProductChange(StoreProduct existing, Integer newProductId) {
-        if (Boolean.TRUE.equals(existing.getPromotionalProduct())) {
-            Optional<StoreProduct> regular = storeProductDao.findRegularLinkedToPromo(existing.getUpc());
-            if (regular.isPresent()) {
-                throw new BusinessValidationException(
-                        "Неможливо змінити id_product для акційного UPC, який уже прив'язаний до звичайного.");
-            }
-            return;
-        }
-
-        if (existing.getUpcProm() != null) {
-            throw new BusinessValidationException(
-                    "Неможливо змінити id_product для звичайного UPC, поки до нього прив'язаний акційний.");
-        }
-        validateMaxTwoPerProduct(newProductId, existing.getPromotionalProduct(), existing.getUpc());
+    public StoreProduct findEntityByUpc(String upc) {
+        return storeProductDao.findEntityByUpc(upc)
+                .orElseThrow(() -> new ResourceNotFoundException("Товар у магазині з UPC " + upc + " не знайдено"));
     }
 }

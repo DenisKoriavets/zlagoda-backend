@@ -2,7 +2,6 @@ package ua.edu.ukma.zlagodabackend.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -13,17 +12,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ua.edu.ukma.zlagodabackend.dto.employee.CashierSalesResponse;
 import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeContactResponse;
 import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeCreateRequest;
 import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeUpdateRequest;
 import ua.edu.ukma.zlagodabackend.model.Employee;
 import ua.edu.ukma.zlagodabackend.service.EmployeeService;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -75,16 +71,6 @@ public class EmployeeController {
     @PreAuthorize("hasRole('MANAGER')")
     public List<EmployeeContactResponse> searchEmployeeContactsBySurname(@PathVariable String surname) {
         return employeeService.findContactsBySurname(surname.trim());
-    }
-
-    // Менеджер, п. 19: Визначити загальну суму проданих товарів з чеків, створених певним касиром за певний період часу
-    @GetMapping("/{id}/sales")
-    @PreAuthorize("hasRole('MANAGER')")
-    public CashierSalesResponse getCashierSalesReport(
-            @PathVariable String id,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
-        return employeeService.getCashierSales(id, from, to);
     }
 
     // Касир, п. 15: Можливість отримати усю інформацію про себе

@@ -1,13 +1,12 @@
 package ua.edu.ukma.zlagodabackend.dao;
 
-import java.time.LocalDateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import ua.edu.ukma.zlagodabackend.dto.employee.CashierSalesResponse;
+
 import ua.edu.ukma.zlagodabackend.model.Employee;
 
 @Repository
@@ -114,21 +113,5 @@ public class EmployeeDao {
     public void delete(String id) {
         String sql = "DELETE FROM Employee WHERE id_employee = ?";
         jdbc.update(sql, id);
-    }
-
-    public Optional<CashierSalesResponse> getTotalSalesByCashier(String id, LocalDateTime from, LocalDateTime to) {
-        String sql = """
-            SELECT e.id_employee, e.empl_surname, e.empl_name, SUM(c.sum_total) as total_sum
-            FROM Employee e
-            JOIN "check" c ON e.id_employee = c.id_employee
-            WHERE e.id_employee = ? AND c.print_date BETWEEN ? AND ?
-            GROUP BY e.id_employee, e.empl_surname, e.empl_name
-            """;
-        return jdbc.query(sql, (rs, rowNum) -> new CashierSalesResponse(
-            rs.getString("id_employee"),
-            rs.getString("empl_surname"),
-            rs.getString("empl_name"),
-            rs.getBigDecimal("total_sum")
-        ), id, from, to).stream().findFirst();
     }
 }
