@@ -185,18 +185,42 @@ public class StoreProductService {
 
     @Transactional
     protected StoreProduct createPromotionalProduct(StoreProductRequest request) {
-        storeProductDao.findByProductAndPromo(request.idProduct(), true).ifPresent(p -> {
-            throw new BusinessValidationException("Акційна позиція для товару " + request.idProduct()
-                    + " вже існує (UPC: " + p.getUpc() + ")");
-        });
+        Optional<StoreProduct> existingPromoOpt = storeProductDao.findByProductAndPromo(request.idProduct(), true);
 
-        Optional<StoreProduct> regularOpt = storeProductDao.findByProductAndPromo(request.idProduct(), false);
+        if (existingPromoOpt.isPresent()) {
+            StoreProduct existingPromo = existingPromoOpt.get();
+
+            if (!existingPromo.getUpc().equals(request.upc())) {
+                throw new BusinessValidationException(
+                        "Для цього товару вже існує акційна позиція з іншим UPC: " + existingPromo.getUpc() +
+                                ". Створення другої акційної позиції заборонено.");
+            }
+
+            int totalQuantity = existingPromo.getProductsNumber() + request.productsNumber();
+            existingPromo.setProductsNumber(totalQuantity);
+
+            storeProductDao.findByProductAndPromo(request.idProduct(), false).ifPresentOrElse(
+                    regular -> existingPromo.setSellingPrice(regular.getSellingPrice().multiply(PROMO_DISCOUNT_FACTOR)),
+                    () -> {
+                        if (request.sellingPrice() != null) {
+                            existingPromo.setSellingPrice(request.sellingPrice());
+                        }
+                    }
+            );
+
+            storeProductDao.update(existingPromo);
+            return existingPromo;
+        }
 
         BigDecimal finalPrice;
+        Optional<StoreProduct> regularOpt = storeProductDao.findByProductAndPromo(request.idProduct(), false);
+
         if (regularOpt.isPresent()) {
-            finalPrice = regularOpt.get().getSellingPrice().multiply(new BigDecimal("0.8"));
+            finalPrice = regularOpt.get().getSellingPrice().multiply(PROMO_DISCOUNT_FACTOR);
         } else {
-            if (request.sellingPrice() == null) throw new BusinessValidationException("Необхідно вказати ціну для створення акційної позиції.");
+            if (request.sellingPrice() == null) {
+                throw new BusinessValidationException("Необхідно вказати ціну для створення нової акційної позиції.");
+            }
             finalPrice = request.sellingPrice();
         }
 
