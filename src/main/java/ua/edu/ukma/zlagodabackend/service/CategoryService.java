@@ -39,9 +39,9 @@ public class CategoryService {
     }
 
     public Category update(Integer id, CategoryRequest request) {
-        Category existingCategory = findById(id); 
+        Category existingCategory = findById(id);
         existingCategory.setCategoryName(request.categoryName());
-        
+
         categoryDao.update(existingCategory);
         return existingCategory;
     }

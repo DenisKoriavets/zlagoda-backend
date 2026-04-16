@@ -72,6 +72,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String m = ex.getMessage() != null ? ex.getMessage() : "";
         if (m.contains("store_product_upc_prom_fkey")) {
             message = "Поле «Звичайний UPC» має бути порожнім або вказувати на наявну позицію в магазині.";
+        } else if (m.contains("store_product_promo_upc_prom_null")) {
+            message = "Для акційної позиції поле UPC_prom у базі має бути порожнім (посилання зберігається у звичайній парі).";
+        } else if (m.contains("store_product_upc_not_self_prom")) {
+            message = "UPC не може посилатися сам на себе через UPC_prom.";
+        } else if (m.contains("store_product_regular_price_positive")) {
+            message = "Для звичайної позиції ціна продажу має бути більшою за 0.";
+        } else if (m.contains("store_product_one_regular_per_product")
+                || m.contains("store_product_one_promo_per_product")) {
+            message = "Для цього товару в магазині вже є звичайна або акційна позиція (обмеження однієї пари на id_product).";
+        } else if (m.contains("store_product_upc_prom_partner_unique")) {
+            message = "До цього акційного UPC вже прив'язаний інший звичайний UPC.";
         } else if (m.contains("product_category_number_fkey")) {
             message = "Неможливо видалити категорію: у каталозі є товари цієї категорії.";
         } else if (m.contains("store_product_id_product_fkey")) {

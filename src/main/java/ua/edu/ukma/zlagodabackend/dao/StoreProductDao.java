@@ -120,6 +120,15 @@ public class StoreProductDao {
         }
     }
 
+    public Optional<StoreProduct> findRegularLinkedToPromo(String promoUpc) {
+        String sql = "SELECT * FROM Store_Product WHERE upc_prom = ?";
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, entityRowMapper, promoUpc));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
     public void save(StoreProduct sp) {
         String sql = """
                 INSERT INTO Store_Product (upc, upc_prom, id_product, selling_price, products_number, promotional_product)

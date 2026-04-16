@@ -1,20 +1,30 @@
 package ua.edu.ukma.zlagodabackend.controller;
 
 import jakarta.validation.Valid;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import ua.edu.ukma.zlagodabackend.dto.employee.CashierSalesResponse;
 import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeCreateRequest;
 import ua.edu.ukma.zlagodabackend.dto.employee.EmployeeUpdateRequest;
 import ua.edu.ukma.zlagodabackend.model.Employee;
 import ua.edu.ukma.zlagodabackend.service.EmployeeService;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/employees")
@@ -49,6 +59,37 @@ public class EmployeeController {
         return employeeService.findById(id);
     }
 
+    @GetMapping("/sorted-by-surname")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<Employee> getEmployeesSortedBySurname() {
+        return employeeService.findAll();
+    }
+
+    @GetMapping("/cashiers/sorted-by-surname")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<Employee> getCashiersSortedBySurname() {
+        return employeeService.findCashiers();
+    }
+
+    @GetMapping("/search-by-surname/{surname}")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<Employee> searchEmployeesBySurname(@PathVariable String surname) {
+        return employeeService.findBySurname(surname.trim());
+    }
+
+    @GetMapping("/search-by-surname/{surname}/contacts")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<Map<String, String>> searchEmployeeContactsBySurname(@PathVariable String surname) {
+        return employeeService.findBySurname(surname.trim()).stream()
+                .map(e -> Map.of(
+                        "idEmployee", e.getIdEmployee(),
+                        "fullName", String.join(" ", e.getEmplSurname(), e.getEmplName()),
+                        "phoneNumber", e.getPhoneNumber(),
+                        "address", String.join(", ", e.getCity(), e.getStreet(), e.getZipCode())
+                ))
+                .toList();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('MANAGER')")
@@ -72,9 +113,9 @@ public class EmployeeController {
     @GetMapping("/{id}/sales")
     @PreAuthorize("hasRole('MANAGER')") // Звіти — тільки для менеджерів
     public CashierSalesResponse getCashierSalesReport(
-        @PathVariable String id,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+            @PathVariable String id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
         return employeeService.getCashierSales(id, from, to);
     }
 }

@@ -35,3 +35,5 @@ out/
 
 ### VS Code ###
 .vscode/
+/src/main/java/ua/edu/ukma/zlagodabackend/config/DemoDataInitializer.java
+/docs/requirements-strict-matrix.md

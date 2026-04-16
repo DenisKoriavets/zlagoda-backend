@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import ua.edu.ukma.zlagodabackend.dto.check.CheckDetailsDto;
 import ua.edu.ukma.zlagodabackend.model.Check;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,7 @@ public class CheckDao {
 
     public List<CheckDetailsDto> findAllWithFilters(String cashierId, LocalDateTime from, LocalDateTime to) {
         StringBuilder sql = new StringBuilder("""
-                SELECT check_number, id_employee, card_number, 
+                SELECT check_number, id_employee, card_number,
                        print_date, sum_total, vat
                 FROM "check"
                 WHERE 1=1
@@ -70,6 +71,32 @@ public class CheckDao {
         var mapper = createMapper();
 
         return jdbcTemplate.query(sql.toString(), mapper, params.toArray());
+    }
+
+    public List<CheckDetailsDto> findByCashierAndPeriod(String cashierId, LocalDateTime from, LocalDateTime to) {
+        return findAllWithFilters(cashierId, from, to);
+    }
+
+    public List<CheckDetailsDto> findAllByPeriod(LocalDateTime from, LocalDateTime to) {
+        return findAllWithFilters(null, from, to);
+    }
+
+    public BigDecimal getSalesSumByCashier(String cashierId, LocalDateTime from, LocalDateTime to) {
+        String sql = """
+                SELECT COALESCE(SUM(sum_total), 0)
+                FROM "check"
+                WHERE id_employee = ? AND print_date BETWEEN ? AND ?
+                """;
+        return jdbcTemplate.queryForObject(sql, BigDecimal.class, cashierId, from, to);
+    }
+
+    public BigDecimal getSalesSumAll(LocalDateTime from, LocalDateTime to) {
+        String sql = """
+                SELECT COALESCE(SUM(sum_total), 0)
+                FROM "check"
+                WHERE print_date BETWEEN ? AND ?
+                """;
+        return jdbcTemplate.queryForObject(sql, BigDecimal.class, from, to);
     }
 
 

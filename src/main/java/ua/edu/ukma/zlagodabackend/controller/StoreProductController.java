@@ -30,15 +30,73 @@ public class StoreProductController {
 
     private final StoreProductService storeProductService;
 
-    @GetMapping
-    public List<StoreProductDetailsDto> getStoreProducts
-            (
-                    @RequestParam(required = false) Boolean promotional,
-                    @RequestParam(required = false) Integer category,
-                    @RequestParam(required = false) String search,
-                    @RequestParam(defaultValue = "name") String sort
-            ) {
-        return storeProductService.findAll(promotional, category, search, sort);
+    @GetMapping("/sorted-by-name")
+    public List<StoreProductDetailsDto> getStoreProductsSortedByName() {
+        return storeProductService.findAll(null, null, null, "name");
+    }
+
+    @GetMapping("/sorted-by-quantity")
+    public List<StoreProductDetailsDto> getStoreProductsSortedByQuantity() {
+        return storeProductService.findAll(null, null, null, "quantity");
+    }
+
+    @GetMapping("/promotional/sorted-by-name")
+    public List<StoreProductDetailsDto> getPromotionalStoreProductsSortedByName() {
+        return storeProductService.findAll(true, null, null, "name");
+    }
+
+    @GetMapping("/promotional/sorted-by-quantity")
+    public List<StoreProductDetailsDto> getPromotionalStoreProductsSortedByQuantity() {
+        return storeProductService.findAll(true, null, null, "quantity");
+    }
+
+    @GetMapping("/non-promotional/sorted-by-name")
+    public List<StoreProductDetailsDto> getNonPromotionalStoreProductsSortedByName() {
+        return storeProductService.findAll(false, null, null, "name");
+    }
+
+    @GetMapping("/non-promotional/sorted-by-quantity")
+    public List<StoreProductDetailsDto> getNonPromotionalStoreProductsSortedByQuantity() {
+        return storeProductService.findAll(false, null, null, "quantity");
+    }
+
+    @GetMapping("/search-by-name-or-upc/{query}/sorted-by-name")
+    public List<StoreProductDetailsDto> searchStoreProductsByNameOrUpcSortedByName(@PathVariable String query) {
+        return storeProductService.searchByNameOrUpcAllSortedByName(query);
+    }
+
+    @GetMapping("/search-by-name-or-upc/{query}/sorted-by-quantity")
+    public List<StoreProductDetailsDto> searchStoreProductsByNameOrUpcSortedByQuantity(@PathVariable String query) {
+        return storeProductService.searchByNameOrUpcAllSortedByQuantity(query);
+    }
+
+    @GetMapping("/promotional/search-by-name-or-upc/{query}/sorted-by-name")
+    public List<StoreProductDetailsDto> searchPromotionalByNameOrUpcSortedByName(@PathVariable String query) {
+        return storeProductService.searchByNameOrUpcPromotionalSortedByName(query);
+    }
+
+    @GetMapping("/promotional/search-by-name-or-upc/{query}/sorted-by-quantity")
+    public List<StoreProductDetailsDto> searchPromotionalByNameOrUpcSortedByQuantity(@PathVariable String query) {
+        return storeProductService.searchByNameOrUpcPromotionalSortedByQuantity(query);
+    }
+
+    @GetMapping("/non-promotional/search-by-name-or-upc/{query}/sorted-by-name")
+    public List<StoreProductDetailsDto> searchNonPromotionalByNameOrUpcSortedByName(@PathVariable String query) {
+        return storeProductService.searchByNameOrUpcNonPromotionalSortedByName(query);
+    }
+
+    @GetMapping("/non-promotional/search-by-name-or-upc/{query}/sorted-by-quantity")
+    public List<StoreProductDetailsDto> searchNonPromotionalByNameOrUpcSortedByQuantity(@PathVariable String query) {
+        return storeProductService.searchByNameOrUpcNonPromotionalSortedByQuantity(query);
+    }
+
+    @GetMapping("/{upc}/total-sold")
+    @PreAuthorize("hasRole('MANAGER')")
+    public Integer getTotalSold(
+        @PathVariable String upc,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+        return storeProductService.getTotalSoldQuantity(upc, from, to);
     }
 
     @GetMapping("/{upc}")
@@ -68,14 +126,5 @@ public class StoreProductController {
     @PreAuthorize("hasRole('MANAGER')")
     public void deleteStoreProduct(@PathVariable String upc) {
         storeProductService.delete(upc);
-    }
-
-    @GetMapping("/{upc}/total-sold")
-    @PreAuthorize("hasRole('MANAGER')")
-    public Integer getTotalSold(
-        @PathVariable String upc,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
-        return storeProductService.getTotalSoldQuantity(upc, from, to);
     }
 }

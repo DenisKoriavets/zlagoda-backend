@@ -40,6 +40,16 @@ public class CategoryController {
         return categoryService.findById(id);
     }
 
+    @GetMapping("/sorted-by-name")
+    public List<Category> getCategoriesSortedByName() {
+        return categoryService.findAllSortedByName();
+    }
+
+    @GetMapping("/search-by-name/{name}")
+    public List<Category> searchCategoriesByName(@PathVariable String name) {
+        return categoryService.searchByName(name);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('MANAGER')")

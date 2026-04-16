@@ -18,6 +18,7 @@ import ua.edu.ukma.zlagodabackend.util.CheckNumberGenerator;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,8 +92,37 @@ public class CheckService {
         return getCheckDetails(checkNumber);
     }
 
-    public List<CheckDetailsDto> getChecks(String cashierId, LocalDateTime from, LocalDateTime to) {
-        return checkDao.findAllWithFilters(cashierId, from, to);
+    public List<CheckDetailsDto> getAllChecksSortedByPrintDateDesc() {
+        return checkDao.findAllWithFilters(null, null, null);
+    }
+
+    public List<CheckDetailsDto> getChecksByCashierSortedByPrintDateDesc(String cashierId) {
+        return checkDao.findAllWithFilters(cashierId, null, null);
+    }
+
+    public List<CheckDetailsDto> getChecksByCashierAndPeriod(String cashierId, LocalDateTime from, LocalDateTime to) {
+        return checkDao.findByCashierAndPeriod(cashierId, from, to);
+    }
+
+    public List<CheckDetailsDto> getAllChecksByPeriod(LocalDateTime from, LocalDateTime to) {
+        return checkDao.findAllByPeriod(from, to);
+    }
+
+    public List<CheckDetailsDto> getMyChecksToday(String cashierId) {
+        LocalDate today = LocalDate.now();
+        return checkDao.findByCashierAndPeriod(
+                cashierId,
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay().minusNanos(1)
+        );
+    }
+
+    public BigDecimal getSalesSumByCashier(String cashierId, LocalDateTime from, LocalDateTime to) {
+        return checkDao.getSalesSumByCashier(cashierId, from, to);
+    }
+
+    public BigDecimal getSalesSumAll(LocalDateTime from, LocalDateTime to) {
+        return checkDao.getSalesSumAll(from, to);
     }
 
     public CheckDetailsDto getCheckDetails(String checkNumber) {

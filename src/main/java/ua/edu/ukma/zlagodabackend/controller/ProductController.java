@@ -5,7 +5,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import ua.edu.ukma.zlagodabackend.dto.product.ProductRequest;
 import ua.edu.ukma.zlagodabackend.model.Product;
 import ua.edu.ukma.zlagodabackend.service.ProductService;
@@ -23,7 +32,7 @@ public class ProductController {
     public List<Product> getProducts(
             @RequestParam(required = false) Integer category,
             @RequestParam(required = false) String search) {
-        
+
         if (category != null) {
             return productService.findByCategoryIdSortedByName(category);
         } else if (search != null && !search.trim().isEmpty()) {
@@ -36,6 +45,21 @@ public class ProductController {
     @GetMapping("/{id}")
     public Product getProductById(@PathVariable Integer id) {
         return productService.findById(id);
+    }
+
+    @GetMapping("/sorted-by-name")
+    public List<Product> getProductsSortedByName() {
+        return productService.findAllSortedByName();
+    }
+
+    @GetMapping("/by-category/{categoryId}/sorted-by-name")
+    public List<Product> getProductsByCategorySortedByName(@PathVariable Integer categoryId) {
+        return productService.findByCategoryIdSortedByName(categoryId);
+    }
+
+    @GetMapping("/search-by-name/{query}")
+    public List<Product> searchProductsByName(@PathVariable String query) {
+        return productService.searchByName(query);
     }
 
     @PostMapping
