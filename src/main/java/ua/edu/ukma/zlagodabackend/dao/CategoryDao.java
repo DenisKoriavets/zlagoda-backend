@@ -40,17 +40,6 @@ public class CategoryDao {
         return jdbcTemplate.query(sql, rowMapper);
     }
 
-    public List<Category> searchByName(String namePart) {
-        String sql = """
-                SELECT c.category_number, c.category_name,
-                """ + COUNT_SUB + """
-                FROM Category c
-                WHERE c.category_name ILIKE ?
-                ORDER BY c.category_name ASC
-                """;
-        return jdbcTemplate.query(sql, rowMapper, "%" + namePart + "%");
-    }
-
     public Optional<Category> findById(Integer id) {
         String sql = """
                 SELECT c.category_number, c.category_name,

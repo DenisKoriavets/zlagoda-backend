@@ -23,10 +23,6 @@ public class CategoryService {
         return categoryDao.findAllSortedByName();
     }
 
-    public List<Category> searchByName(String namePart) {
-        return categoryDao.searchByName(namePart);
-    }
-
     public Category findById(Integer id) {
         return categoryDao.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Категорію з ID " + id + " не знайдено"));

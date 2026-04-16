@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ua.edu.ukma.zlagodabackend.dto.category.CategoryRequest;
@@ -27,29 +26,19 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
+    // Менеджер (Вимога 8): Отримати інформацію про усі категорії, відсортовані за назвою
     @GetMapping
-    public List<Category> getAllCategories(@RequestParam(required = false) String search) {
-        if (search != null && !search.isBlank()) {
-            return categoryService.searchByName(search.trim());
-        }
+    public List<Category> getAllCategories() {
         return categoryService.findAllSortedByName();
     }
 
+    // Допоміжний метод для отримання даних однієї категорії (для фронтенду)
     @GetMapping("/{id}")
     public Category getCategoryById(@PathVariable Integer id) {
         return categoryService.findById(id);
     }
 
-    @GetMapping("/sorted-by-name")
-    public List<Category> getCategoriesSortedByName() {
-        return categoryService.findAllSortedByName();
-    }
-
-    @GetMapping("/search-by-name/{name}")
-    public List<Category> searchCategoriesByName(@PathVariable String name) {
-        return categoryService.searchByName(name);
-    }
-
+    // Менеджер (Вимога 1): Додавати нові дані про категорії товарів
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('MANAGER')")
@@ -57,12 +46,14 @@ public class CategoryController {
         return categoryService.create(request);
     }
 
+    // Менеджер (Вимога 2): Редагувати дані про категорії товарів
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER')")
     public Category updateCategory(@PathVariable Integer id, @Valid @RequestBody CategoryRequest request) {
         return categoryService.update(id, request);
     }
 
+    // Менеджер (Вимога 3): Видаляти дані про категорії товарів
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasRole('MANAGER')")

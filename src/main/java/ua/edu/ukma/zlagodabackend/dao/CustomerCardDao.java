@@ -32,10 +32,6 @@ public class CustomerCardDao {
         return jdbc.query(SELECT_BASE + " ORDER BY cc.cust_surname", mapper);
     }
 
-    public List<CustomerCard> findAllSortedByPercent() {
-        return jdbc.query(SELECT_BASE + " ORDER BY cc.percent DESC, cc.cust_surname", mapper);
-    }
-
     public Optional<CustomerCard> findById(String cardNumber) {
         String sql = SELECT_BASE + " WHERE cc.card_number = ?";
         return jdbc.query(sql, mapper, cardNumber).stream().findFirst();
@@ -68,19 +64,5 @@ public class CustomerCardDao {
 
     public void delete(String cardNumber) {
         jdbc.update("DELETE FROM Customer_Card WHERE card_number = ?", cardNumber);
-    }
-
-    public List<CustomerCard> findByProductUpc(String upc) {
-        String sql = """
-                SELECT DISTINCT cc.card_number, cc.cust_surname, cc.cust_name, cc.cust_patronymic,
-                       cc.phone_number, cc.city, cc.street, cc.zip_code, cc.percent,
-                       (SELECT COUNT(*)::int FROM "check" chk WHERE chk.card_number = cc.card_number) AS check_count
-                FROM Customer_Card cc
-                JOIN "check" c ON cc.card_number = c.card_number
-                JOIN Sale s ON c.check_number = s.check_number
-                WHERE s.upc = ?
-                ORDER BY cc.cust_surname ASC
-                """;
-        return jdbc.query(sql, mapper, upc);
     }
 }
