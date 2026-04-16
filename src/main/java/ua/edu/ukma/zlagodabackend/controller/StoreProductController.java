@@ -51,42 +51,42 @@ public class StoreProductController {
     // Касир п. 2: Отримати усі товари у магазині, відсортовані за назвою
     @GetMapping("/sorted-by-name")
     @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
-    public List<StoreProductDetailsDto> getStoreProductsSortedByName() {
+    public List<StoreProductFullResponse> getStoreProductsSortedByName() {
         return storeProductService.findAllSortedByName();
     }
 
     // Менеджер п. 10: Отримати усі товари у магазині, відсортовані за кількістю
     @GetMapping("/sorted-by-quantity")
     @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
-    public List<StoreProductDetailsDto> getStoreProductsSortedByQuantity() {
+    public List<StoreProductFullResponse> getStoreProductsSortedByQuantity() {
         return storeProductService.findAllSortedByQuantity();
     }
 
     // Менеджер п. 15 / Касир п. 12: Акційні товари, відсортовані за назвою
     @GetMapping("/promotional/sorted-by-name")
     @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
-    public List<StoreProductDetailsDto> getPromotionalStoreProductsSortedByName() {
+    public List<StoreProductFullResponse> getPromotionalStoreProductsSortedByName() {
         return storeProductService.findPromotionalSortedByName();
     }
 
     // Менеджер п. 15 / Касир п. 12: Акційні товари, відсортовані за кількістю
     @GetMapping("/promotional/sorted-by-quantity")
     @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
-    public List<StoreProductDetailsDto> getPromotionalStoreProductsSortedByQuantity() {
+    public List<StoreProductFullResponse> getPromotionalStoreProductsSortedByQuantity() {
         return storeProductService.findPromotionalSortedByQuantity();
     }
 
     // Менеджер п. 16 / Касир п. 13: Не акційні товари, відсортовані за назвою
     @GetMapping("/non-promotional/sorted-by-name")
     @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
-    public List<StoreProductDetailsDto> getNonPromotionalStoreProductsSortedByName() {
+    public List<StoreProductFullResponse> getNonPromotionalStoreProductsSortedByName() {
         return storeProductService.findNonPromotionalSortedByName();
     }
 
     // Менеджер п. 16 / Касир п. 13: Не акційні товари, відсортовані за кількістю
     @GetMapping("/non-promotional/sorted-by-quantity")
     @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
-    public List<StoreProductDetailsDto> getNonPromotionalStoreProductsSortedByQuantity() {
+    public List<StoreProductFullResponse> getNonPromotionalStoreProductsSortedByQuantity() {
         return storeProductService.findNonPromotionalSortedByQuantity();
     }
 

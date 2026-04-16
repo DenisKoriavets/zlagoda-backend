@@ -140,4 +140,30 @@ public class StoreProductDao {
             return Optional.empty();
         }
     }
+
+    public int countByIdProduct(Integer idProduct) {
+        String sql = "SELECT COUNT(*) FROM Store_Product WHERE id_product = ?";
+        Integer n = jdbc.queryForObject(sql, Integer.class, idProduct);
+        return n != null ? n : 0;
+    }
+
+    public void decreaseQuantity(String upc, int quantityToSubtract) {
+        String sql = """
+            UPDATE Store_Product 
+            SET products_number = products_number - ? 
+            WHERE upc = ? AND products_number >= ?
+            """;
+        int updatedRows = jdbc.update(sql, quantityToSubtract, upc, quantityToSubtract);
+        if (updatedRows == 0) {
+            throw new RuntimeException("Недостатньо товару на складі для UPC " + upc);
+        }
+    }
+
+    public List<StoreProductFullResponse> findNonPromotionalSortedByQuantity() {
+        String sql = """
+        SELECT sp.*, p.product_name, p.characteristics 
+        FROM Store_Product sp JOIN Product p ON sp.id_product = p.id_product 
+        WHERE sp.promotional_product = false ORDER BY sp.products_number DESC""";
+        return jdbc.query(sql, fullMapper);
+    }
 }

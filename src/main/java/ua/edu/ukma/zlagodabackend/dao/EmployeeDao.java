@@ -43,14 +43,14 @@ public class EmployeeDao {
 
     // Менеджер п. 5: Отримати інформацію про усіх касирів, відсортованих за прізвищем
     public List<Employee> findCashiersSortedBySurname() {
-        String sql = "SELECT * FROM Employee WHERE empl_role = 'CASHIER' ORDER BY empl_surname ASC";
+        String sql = "SELECT * FROM Employee WHERE empl_role = 'cashier' ORDER BY empl_surname ASC";
         return jdbc.query(sql, EMPLOYEE_MAPPER);
     }
 
     // Менеджер п. 11: Пошук за прізвищем (для контактів)
     public List<Employee> findBySurname(String surname) {
         String sql = "SELECT * FROM Employee WHERE empl_surname LIKE ? ORDER BY empl_surname ASC";
-        return jdbc.query(sql, EMPLOYEE_MAPPER, surname + "%");
+        return jdbc.query(sql, EMPLOYEE_MAPPER, "%" + surname + "%");
     }
 
     public Optional<Employee> findById(String id) {
