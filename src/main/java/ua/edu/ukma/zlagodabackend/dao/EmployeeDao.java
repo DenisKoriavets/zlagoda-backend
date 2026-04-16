@@ -63,7 +63,7 @@ public class EmployeeDao {
         String sql = """
             SELECT e.id_employee, e.empl_surname, e.empl_name, COALESCE(SUM(c.sum_total), 0) as total_sum
             FROM Employee e
-            LEFT JOIN "Check" c ON e.id_employee = c.id_employee
+            LEFT JOIN "check" c ON e.id_employee = c.id_employee
             WHERE e.id_employee = ? AND c.print_date BETWEEN ? AND ?
             GROUP BY e.id_employee, e.empl_surname, e.empl_name
             """;
