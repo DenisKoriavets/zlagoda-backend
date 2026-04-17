@@ -34,12 +34,12 @@ public class ComplexQueryService {
         if (categoryName == null || categoryName.isBlank()) {
             throw new BusinessValidationException("Назва категорії є обов'язковою для цього звіту.");
         }
-        return analyticsDao.getLoyalCategoryFans(categoryName.trim());
+        return complexQueryDao.getLoyalCategoryFans(categoryName.trim());
     }
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getTopProductsPremium() {
-        return analyticsDao.getTopProductsPremium();
+        return complexQueryDao.getTopProductsPremium();
     }
 
 }
