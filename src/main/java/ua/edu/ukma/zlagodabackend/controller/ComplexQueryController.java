@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import ua.edu.ukma.zlagodabackend.dto.report.BaseBasketItemResponse;
+import ua.edu.ukma.zlagodabackend.dto.report.CityCustomerStatsResponse;
 import ua.edu.ukma.zlagodabackend.service.ComplexQueryService;
 
 import java.time.LocalDateTime;
@@ -44,5 +46,17 @@ public class ComplexQueryController {
     @PreAuthorize("hasRole('MANAGER')")
     public List<Map<String, Object>> getTopProductsPremium() {
         return complexQueryService.getTopProductsPremium();
+    }
+
+    @GetMapping("/reports/purchasing-power")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<CityCustomerStatsResponse> getPurchasingPowerByCity(@RequestParam String city) {
+        return complexQueryService.getPurchasingPowerByCity(city);
+    }
+
+    @GetMapping("/base-basket")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<BaseBasketItemResponse> getBaseBasket() {
+        return complexQueryService.getBaseBasketProducts();
     }
 }
