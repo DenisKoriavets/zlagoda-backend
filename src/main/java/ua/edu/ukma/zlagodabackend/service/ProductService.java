@@ -53,7 +53,6 @@ public class ProductService {
         Product product = new Product();
         product.setCategoryNumber(request.categoryNumber());
         product.setProductName(request.productName());
-        product.setProducer(request.producer());
         product.setCharacteristics(request.characteristics());
 
         return productDao.save(product);
@@ -71,7 +70,6 @@ public class ProductService {
 
         existingProduct.setCategoryNumber(request.categoryNumber());
         existingProduct.setProductName(request.productName());
-        existingProduct.setProducer(request.producer());
         existingProduct.setCharacteristics(request.characteristics());
 
         productDao.update(existingProduct);

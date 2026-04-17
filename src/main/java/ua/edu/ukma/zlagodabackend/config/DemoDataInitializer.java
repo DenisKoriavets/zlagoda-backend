@@ -1,11 +1,5 @@
 package ua.edu.ukma.zlagodabackend.config;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -14,9 +8,25 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import ua.edu.ukma.zlagodabackend.dao.CategoryDao;
+import ua.edu.ukma.zlagodabackend.dao.CheckDao;
+import ua.edu.ukma.zlagodabackend.dao.CustomerCardDao;
+import ua.edu.ukma.zlagodabackend.dao.EmployeeDao;
+import ua.edu.ukma.zlagodabackend.dao.ProductDao;
+import ua.edu.ukma.zlagodabackend.dao.SaleDao;
+import ua.edu.ukma.zlagodabackend.dao.StoreProductDao;
+import ua.edu.ukma.zlagodabackend.model.Category;
+import ua.edu.ukma.zlagodabackend.model.Check;
+import ua.edu.ukma.zlagodabackend.model.CustomerCard;
+import ua.edu.ukma.zlagodabackend.model.Employee;
+import ua.edu.ukma.zlagodabackend.model.Product;
+import ua.edu.ukma.zlagodabackend.model.Sale;
+import ua.edu.ukma.zlagodabackend.model.StoreProduct;
 
-import ua.edu.ukma.zlagodabackend.dao.*;
-import ua.edu.ukma.zlagodabackend.model.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -49,11 +59,11 @@ public class DemoDataInitializer implements CommandLineRunner {
         Category catDrinks = ensureCategory("Напої");
         Category catGrocery = ensureCategory("Бакалія");
 
-        Product milk = ensureProduct(catDairy.getCategoryNumber(), "Молоко 2.5%", "Галичина", "Пакет 900г");
-        Product bread = ensureProduct(catBakery.getCategoryNumber(), "Батон Київський", "Київхліб", "Нарізаний, 500г");
-        Product sausage = ensureProduct(catMeat.getCategoryNumber(), "Ковбаса Лікарська", "Ятрань", "Вищий сорт");
-        Product water = ensureProduct(catDrinks.getCategoryNumber(), "Вода Моршинська", "IDS", "1.5л негазирована");
-        Product pasta = ensureProduct(catGrocery.getCategoryNumber(), "Макарони", "Чумак", "Спіральки 400г");
+        Product milk = ensureProduct(catDairy.getCategoryNumber(), "Молоко 2.5% Галичина", "Пакет 900г");
+        Product bread = ensureProduct(catBakery.getCategoryNumber(), "Батон Київський", "Нарізаний, 500г");
+        Product sausage = ensureProduct(catMeat.getCategoryNumber(), "Ковбаса Лікарська Ятрань", "Вищий сорт");
+        Product water = ensureProduct(catDrinks.getCategoryNumber(), "Вода Моршинська", "1.5л негазирована");
+        Product pasta = ensureProduct(catGrocery.getCategoryNumber(), "Макарони Чумак", "Спіральки 400г");
 
         ensureStoreProduct("100000000001", null, milk.getIdProduct(), "45.50", 50, false);
         ensureStoreProduct("100000000002", null, milk.getIdProduct(), "36.40", 20, true);
@@ -102,20 +112,22 @@ public class DemoDataInitializer implements CommandLineRunner {
                 });
     }
 
-    private Product ensureProduct(int categoryId, String name, String producer, String chars) {
+    private Product ensureProduct(int categoryId, String name, String chars) {
         try {
-            int id = jdbcTemplate.queryForObject("SELECT id_product FROM Product WHERE product_name = ? AND producer = ?", Integer.class, name, producer);
+            int id = jdbcTemplate.queryForObject(
+                    "SELECT id_product FROM Product WHERE product_name = ?",
+                    Integer.class,
+                    name
+            );
             Product p = new Product();
             p.setIdProduct(id);
             p.setProductName(name);
-            p.setProducer(producer);
             p.setCharacteristics(chars);
             p.setCategoryNumber(categoryId);
             return p;
         } catch (EmptyResultDataAccessException e) {
             Product p = new Product();
             p.setProductName(name);
-            p.setProducer(producer);
             p.setCharacteristics(chars);
             p.setCategoryNumber(categoryId);
             return productDao.save(p);

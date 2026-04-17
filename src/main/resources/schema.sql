@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS Product (
                          id_product SERIAL PRIMARY KEY,
                          category_number INT NOT NULL,
                          product_name VARCHAR(50) NOT NULL,
-                         producer VARCHAR(50) NOT NULL,
                          characteristics VARCHAR(100) NOT NULL,
                          FOREIGN KEY (category_number) REFERENCES Category(category_number) ON UPDATE CASCADE ON DELETE NO ACTION
 );
@@ -32,7 +31,7 @@ CREATE TABLE IF NOT EXISTS Store_Product (
                                UPC VARCHAR(12) PRIMARY KEY,
                                UPC_prom VARCHAR(12),
                                id_product INT NOT NULL,
-                               selling_price DECIMAL(13,4) NOT NULL CHECK (selling_price >= 0),
+                               selling_price DECIMAL(13,4) NOT NULL CHECK (selling_price > 0),
                                products_number INT NOT NULL CHECK (products_number >= 0),
                                promotional_product BOOLEAN NOT NULL DEFAULT FALSE,
                                FOREIGN KEY (id_product) REFERENCES Product(id_product) ON UPDATE CASCADE ON DELETE NO ACTION,

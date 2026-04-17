@@ -12,10 +12,6 @@ public record ProductRequest(
         @Size(max = 50, message = "Назва товару не повинна перевищувати 50 символів")
         String productName,
 
-        @NotBlank(message = "Інформація про виробника не може бути порожньою")
-        @Size(max = 50, message = "Назва виробника не повинна перевищувати 50 символів")
-        String producer,
-
         @NotBlank(message = "Характеристики не можуть бути порожніми")
         @Size(max = 100, message = "Характеристики не повинні перевищувати 100 символів")
         String characteristics

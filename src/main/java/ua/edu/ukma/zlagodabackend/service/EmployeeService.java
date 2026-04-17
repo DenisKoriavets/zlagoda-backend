@@ -97,7 +97,6 @@ public class EmployeeService {
     public Employee update(String id, EmployeeUpdateRequest request) {
         Employee existing = findById(id);
 
-        // ДОДАНО: Перевірка віку при редагуванні, щоб уникнути порушення цілісності
         validateAge(request.dateOfBirth());
 
         Employee updated = new Employee(
@@ -113,7 +112,7 @@ public class EmployeeService {
                 request.city(),
                 request.street(),
                 request.zipCode(),
-                existing.getPassword(), // Пароль залишаємо старим
+                existing.getPassword(),
                 null
         );
 
@@ -125,7 +124,7 @@ public class EmployeeService {
     public void delete(String id) {
         findById(id);
 
-        // Обмеження цілісності: On Delete No Action для працівників із чеками [cite: 229]
+        // Обмеження цілісності: On Delete No Action для працівників із чеками
         int checksCount = checkDao.countByEmployeeId(id);
         if (checksCount > 0) {
             throw new BusinessValidationException(
