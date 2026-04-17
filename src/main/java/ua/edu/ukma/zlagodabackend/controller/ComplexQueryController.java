@@ -1,0 +1,36 @@
+package ua.edu.ukma.zlagodabackend.controller;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import ua.edu.ukma.zlagodabackend.service.ComplexQueryService;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/v1/analytics")
+@RequiredArgsConstructor
+public class ComplexQueryController {
+
+    private final ComplexQueryService complexQueryService;
+
+    @GetMapping("/category-sales-volume")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<Map<String, Object>> getCategorySalesVolume(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+        return complexQueryService.getCategorySalesVolume(from, to);
+    }
+
+    @GetMapping("/vip-customers")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<Map<String, Object>> getVipCustomers() {
+        return complexQueryService.getVipCustomers();
+    }
+}
