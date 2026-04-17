@@ -29,4 +29,17 @@ public class ComplexQueryService {
         return complexQueryDao.getVipCustomers();
     }
 
+     @Transactional(readOnly = true)
+    public List<Map<String, Object>> getLoyalCategoryFans(String categoryName) {
+        if (categoryName == null || categoryName.isBlank()) {
+            throw new BusinessValidationException("Назва категорії є обов'язковою для цього звіту.");
+        }
+        return analyticsDao.getLoyalCategoryFans(categoryName.trim());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getTopProductsPremium() {
+        return analyticsDao.getTopProductsPremium();
+    }
+
 }
