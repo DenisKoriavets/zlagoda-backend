@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS Customer_Card (
                                cust_surname VARCHAR(50) NOT NULL,
                                cust_name VARCHAR(50) NOT NULL,
                                cust_patronymic VARCHAR(50),
-                               phone_number VARCHAR(13) NOT NULL CHECK (phone_number ~ '^\+?[0-9]{1,12}$'),
+                               phone_number VARCHAR(13) NOT NULL CHECK (phone_number ~ '^\\+[0-9]{1,12}$'),
                                city VARCHAR(50),
                                street VARCHAR(50),
                                zip_code VARCHAR(9),

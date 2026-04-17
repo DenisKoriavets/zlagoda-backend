@@ -58,23 +58,6 @@ public class EmployeeDao {
         return jdbc.query(sql, EMPLOYEE_MAPPER, id).stream().findFirst();
     }
 
-    // Менеджер п. 19: Визначити загальну суму проданих товарів певним касиром за період
-    public Optional<CashierSalesResponse> getTotalSalesByCashier(String id, LocalDateTime from, LocalDateTime to) {
-        String sql = """
-            SELECT e.id_employee, e.empl_surname, e.empl_name, COALESCE(SUM(c.sum_total), 0) as total_sum
-            FROM Employee e
-            LEFT JOIN "check" c ON e.id_employee = c.id_employee
-            WHERE e.id_employee = ? AND c.print_date BETWEEN ? AND ?
-            GROUP BY e.id_employee, e.empl_surname, e.empl_name
-            """;
-        return jdbc.query(sql, (rs, rowNum) -> new CashierSalesResponse(
-                rs.getString("id_employee"),
-                rs.getString("empl_surname"),
-                rs.getString("empl_name"),
-                rs.getBigDecimal("total_sum")
-        ), id, from, to).stream().findFirst();
-    }
-
     // Менеджер п. 1: Введення відомостей про нового працівника
     public void save(Employee e) {
         String sql = """
