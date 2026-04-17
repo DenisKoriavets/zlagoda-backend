@@ -33,4 +33,16 @@ public class ComplexQueryController {
     public List<Map<String, Object>> getVipCustomers() {
         return complexQueryService.getVipCustomers();
     }
+    
+    @GetMapping("/loyal-category-fans")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<Map<String, Object>> getLoyalCategoryFans(@RequestParam String categoryName) {
+        return complexQueryService.getLoyalCategoryFans(categoryName);
+    }
+    
+    @GetMapping("/top-products-premium")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<Map<String, Object>> getTopProductsPremium() {
+        return complexQueryService.getTopProductsPremium();
+    }
 }
