@@ -50,4 +50,42 @@ public class ComplexQueryDao {
         return jdbc.queryForList(sql);
     }
 
+    public List<Map<String, Object>> getLoyalCategoryFans(String categoryName) {
+        String sql = """
+            SELECT cc.card_number, cc.cust_surname, cc.cust_name
+            FROM Customer_Card cc
+            WHERE NOT EXISTS (
+                SELECT sp.upc
+                FROM Store_Product sp
+                JOIN Product p ON sp.id_product = p.id_product
+                JOIN Category c ON p.category_number = c.category_number
+                WHERE c.category_name = ?
+                  AND NOT EXISTS (
+                    SELECT 1
+                    FROM "check" ch
+                    JOIN Sale s ON ch.check_number = s.check_number
+                    WHERE ch.card_number = cc.card_number
+                      AND s.upc = sp.upc
+                )
+            )
+            """;
+        return jdbc.queryForList(sql, categoryName);
+    }
+
+    public List<Map<String, Object>> getTopProductsPremium() {
+        String sql = """
+            SELECT p.product_name, SUM(s.selling_price * s.product_number) AS total_revenue
+            FROM Product p
+            JOIN Store_Product sp ON p.id_product = sp.id_product
+            JOIN Sale s ON sp.upc = s.upc
+            JOIN "check" ch ON s.check_number = ch.check_number
+            JOIN Customer_Card cc ON ch.card_number = cc.card_number
+            WHERE cc.percent >= 10
+            GROUP BY p.id_product, p.product_name
+            ORDER BY total_revenue DESC
+            LIMIT 3
+            """;
+        return jdbc.queryForList(sql);
+    }
+
 }
