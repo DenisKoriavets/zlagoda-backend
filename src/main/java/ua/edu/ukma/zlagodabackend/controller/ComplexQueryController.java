@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ua.edu.ukma.zlagodabackend.dto.report.BaseBasketItemResponse;
+import ua.edu.ukma.zlagodabackend.dto.report.CategorySalesVolumeResponse;
 import ua.edu.ukma.zlagodabackend.dto.report.CityCustomerStatsResponse;
+import ua.edu.ukma.zlagodabackend.dto.report.VipCustomerResponse;
 import ua.edu.ukma.zlagodabackend.service.ComplexQueryService;
 
 import java.time.LocalDateTime;
@@ -24,15 +26,15 @@ public class ComplexQueryController {
 
     @GetMapping("/category-sales-volume")
     @PreAuthorize("hasRole('MANAGER')")
-    public List<Map<String, Object>> getCategorySalesVolume(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+    public List<CategorySalesVolumeResponse> getCategorySalesVolume(
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
         return complexQueryService.getCategorySalesVolume(from, to);
     }
 
     @GetMapping("/vip-customers")
     @PreAuthorize("hasRole('MANAGER')")
-    public List<Map<String, Object>> getVipCustomers() {
+    public List<VipCustomerResponse> getVipCustomers() {
         return complexQueryService.getVipCustomers();
     }
     

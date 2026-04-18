@@ -5,7 +5,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.edu.ukma.zlagodabackend.dao.ComplexQueryDao;
 import ua.edu.ukma.zlagodabackend.dto.report.BaseBasketItemResponse;
+import ua.edu.ukma.zlagodabackend.dto.report.CategorySalesVolumeResponse;
 import ua.edu.ukma.zlagodabackend.dto.report.CityCustomerStatsResponse;
+import ua.edu.ukma.zlagodabackend.dto.report.VipCustomerResponse;
 import ua.edu.ukma.zlagodabackend.exception.BusinessValidationException;
 
 import java.time.LocalDateTime;
@@ -19,15 +21,18 @@ public class ComplexQueryService {
     private final ComplexQueryDao complexQueryDao;
 
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> getCategorySalesVolume(LocalDateTime from, LocalDateTime to) {
-        if (from != null && to != null && from.isAfter(to)) {
+    public List<CategorySalesVolumeResponse> getCategorySalesVolume(LocalDateTime from, LocalDateTime to) {
+        if (from == null || to == null) {
+            throw new BusinessValidationException("Період (from та to) є обов'язковим.");
+        }
+        if (from.isAfter(to)) {
             throw new BusinessValidationException("Початкова дата не може бути пізнішою за кінцеву.");
         }
         return complexQueryDao.getCategorySalesVolume(from, to);
     }
 
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> getVipCustomers() {
+    public List<VipCustomerResponse> getVipCustomers() {
         return complexQueryDao.getVipCustomers();
     }
 
