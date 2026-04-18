@@ -9,7 +9,8 @@ import ua.edu.ukma.zlagodabackend.dto.report.CityCustomerStatsResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
+import ua.edu.ukma.zlagodabackend.dto.report.LoyalCategoryFanResponse;
+import ua.edu.ukma.zlagodabackend.dto.report.TopProductPremiumResponse;
 import ua.edu.ukma.zlagodabackend.dto.report.VipCustomerResponse;
 
 @Repository

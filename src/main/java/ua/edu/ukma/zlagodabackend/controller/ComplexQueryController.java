@@ -10,12 +10,13 @@ import org.springframework.web.bind.annotation.RestController;
 import ua.edu.ukma.zlagodabackend.dto.report.BaseBasketItemResponse;
 import ua.edu.ukma.zlagodabackend.dto.report.CategorySalesVolumeResponse;
 import ua.edu.ukma.zlagodabackend.dto.report.CityCustomerStatsResponse;
+import ua.edu.ukma.zlagodabackend.dto.report.LoyalCategoryFanResponse;
+import ua.edu.ukma.zlagodabackend.dto.report.TopProductPremiumResponse;
 import ua.edu.ukma.zlagodabackend.dto.report.VipCustomerResponse;
 import ua.edu.ukma.zlagodabackend.service.ComplexQueryService;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/analytics")
