@@ -8,6 +8,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ua.edu.ukma.zlagodabackend.model.Product;
+import ua.edu.ukma.zlagodabackend.util.DbCollation;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
@@ -32,19 +33,19 @@ public class ProductDao {
 
     // Менеджер п. 9 / Касир п. 1: Отримати усі товари, відсортовані за назвою
     public List<Product> findAllSortedByName() {
-        String sql = "SELECT * FROM Product ORDER BY product_name ASC";
+        String sql = "SELECT * FROM Product ORDER BY product_name COLLATE \"" + DbCollation.UK_UA_ICU + "\" ASC";
         return jdbcTemplate.query(sql, rowMapper);
     }
 
     // Менеджер п. 13 / Касир п. 5: Товари певної категорії, відсортовані за назвою
     public List<Product> findByCategoryIdSortedByName(Integer categoryId) {
-        String sql = "SELECT * FROM Product WHERE category_number = ? ORDER BY product_name ASC";
+        String sql = "SELECT * FROM Product WHERE category_number = ? ORDER BY product_name COLLATE \"" + DbCollation.UK_UA_ICU + "\" ASC";
         return jdbcTemplate.query(sql, rowMapper, categoryId);
     }
 
     // Касир п. 4: Пошук товарів за назвою
     public List<Product> searchByName(String namePart) {
-        String sql = "SELECT * FROM Product WHERE product_name ILIKE ? ORDER BY product_name ASC";
+        String sql = "SELECT * FROM Product WHERE product_name ILIKE ? ORDER BY product_name COLLATE \"" + DbCollation.UK_UA_ICU + "\" ASC";
         return jdbcTemplate.query(sql, rowMapper, "%" + namePart + "%");
     }
 

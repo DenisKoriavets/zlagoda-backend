@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import ua.edu.ukma.zlagodabackend.dto.storeProduct.StoreProductCashierResponse;
 import ua.edu.ukma.zlagodabackend.dto.storeProduct.StoreProductFullResponse;
 import ua.edu.ukma.zlagodabackend.model.StoreProduct;
+import ua.edu.ukma.zlagodabackend.util.DbCollation;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -46,7 +47,7 @@ public class StoreProductDao {
         String sql = """
             SELECT sp.*, p.product_name, p.characteristics 
             FROM Store_Product sp JOIN Product p ON sp.id_product = p.id_product 
-            ORDER BY p.product_name ASC""";
+            ORDER BY p.product_name COLLATE "%s" ASC""".formatted(DbCollation.UK_UA_ICU);
         return jdbc.query(sql, fullMapper);
     }
 
@@ -76,7 +77,7 @@ public class StoreProductDao {
         String sql = """
             SELECT sp.*, p.product_name, p.characteristics 
             FROM Store_Product sp JOIN Product p ON sp.id_product = p.id_product 
-            WHERE sp.promotional_product = true ORDER BY p.product_name ASC""";
+            WHERE sp.promotional_product = true ORDER BY p.product_name COLLATE "%s" ASC""".formatted(DbCollation.UK_UA_ICU);
         return jdbc.query(sql, fullMapper);
     }
 
@@ -93,7 +94,7 @@ public class StoreProductDao {
         String sql = """
             SELECT sp.*, p.product_name, p.characteristics 
             FROM Store_Product sp JOIN Product p ON sp.id_product = p.id_product 
-            WHERE sp.promotional_product = false ORDER BY p.product_name ASC""";
+            WHERE sp.promotional_product = false ORDER BY p.product_name COLLATE "%s" ASC""".formatted(DbCollation.UK_UA_ICU);
         return jdbc.query(sql, fullMapper);
     }
 

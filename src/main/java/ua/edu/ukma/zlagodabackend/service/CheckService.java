@@ -118,11 +118,8 @@ public class CheckService {
     }
 
     public CheckDetailsDto getCheckDetails(String checkNumber) {
-        CheckDetailsDto checkDetails = checkDao.findDetailsById(checkNumber)
+        return checkDao.findFullDetailsByCheckNumber(checkNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Чек " + checkNumber + " не знайдено"));
-        
-        checkDetails.setItems(saleDao.findByCheckNumber(checkNumber));
-        return checkDetails;
     }
 
     public void deleteCheck(String checkNumber) {

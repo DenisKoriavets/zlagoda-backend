@@ -1,14 +1,15 @@
 package ua.edu.ukma.zlagodabackend.dao;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ua.edu.ukma.zlagodabackend.dto.check.CheckDetailsDto;
+import ua.edu.ukma.zlagodabackend.dto.saleItem.SaleItemResponse;
 import ua.edu.ukma.zlagodabackend.model.Check;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -100,21 +101,57 @@ public class CheckDao {
     }
 
 
-    public Optional<CheckDetailsDto> findDetailsById(String checkNumber) {
+    /**
+     * Один запит: шапка чека + позиції (назва товару, кількість, ціна з Sale).
+     */
+    public Optional<CheckDetailsDto> findFullDetailsByCheckNumber(String checkNumber) {
         String sql = """
-                SELECT check_number, id_employee, card_number, 
-                       print_date, sum_total, vat
-                FROM "check"
-                WHERE check_number = ?
+                SELECT c.check_number, c.id_employee, c.card_number, c.print_date, c.sum_total, c.vat,
+                       s.upc, s.product_number, s.selling_price, p.product_name
+                FROM "check" c
+                LEFT JOIN Sale s ON s.check_number = c.check_number
+                LEFT JOIN Store_Product sp ON s.upc = sp.upc
+                LEFT JOIN Product p ON sp.id_product = p.id_product
+                WHERE c.check_number = ?
+                ORDER BY s.upc NULLS LAST
                 """;
 
-        var mapper = createMapper();
+        CheckDetailsDto dto = jdbcTemplate.query(sql, rs -> {
+            if (!rs.next()) {
+                return null;
+            }
+            CheckDetailsDto d = new CheckDetailsDto();
+            d.setCheckNumber(rs.getString("check_number"));
+            d.setIdEmployee(rs.getString("id_employee"));
+            d.setCardNumber(rs.getString("card_number"));
+            d.setPrintDate(rs.getTimestamp("print_date").toLocalDateTime());
+            d.setSumTotal(rs.getBigDecimal("sum_total"));
+            d.setVat(rs.getBigDecimal("vat"));
+            List<SaleItemResponse> items = new ArrayList<>();
+            String upc = rs.getString("upc");
+            if (upc != null) {
+                items.add(mapSaleRow(rs));
+                while (rs.next()) {
+                    String u = rs.getString("upc");
+                    if (u != null) {
+                        items.add(mapSaleRow(rs));
+                    }
+                }
+            }
+            d.setItems(items);
+            return d;
+        }, checkNumber);
 
-        try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, mapper, checkNumber));
-        } catch (EmptyResultDataAccessException e) {
-            return Optional.empty();
-        }
+        return Optional.ofNullable(dto);
+    }
+
+    private static SaleItemResponse mapSaleRow(java.sql.ResultSet rs) throws SQLException {
+        return new SaleItemResponse(
+                rs.getString("upc"),
+                rs.getString("product_name"),
+                rs.getInt("product_number"),
+                rs.getBigDecimal("selling_price")
+        );
     }
 
     public int countByEmployeeId(String idEmployee) {
