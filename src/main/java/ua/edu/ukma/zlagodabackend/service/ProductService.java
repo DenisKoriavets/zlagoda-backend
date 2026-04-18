@@ -53,6 +53,7 @@ public class ProductService {
         Product product = new Product();
         product.setCategoryNumber(request.categoryNumber());
         product.setProductName(request.productName());
+        product.setProducer(request.producer());
         product.setCharacteristics(request.characteristics());
 
         return productDao.save(product);
@@ -70,6 +71,7 @@ public class ProductService {
 
         existingProduct.setCategoryNumber(request.categoryNumber());
         existingProduct.setProductName(request.productName());
+        existingProduct.setProducer(request.producer());
         existingProduct.setCharacteristics(request.characteristics());
 
         productDao.update(existingProduct);
@@ -95,6 +97,9 @@ public class ProductService {
     private void validateProductData(ProductRequest request) {
         if (request.productName() == null || request.productName().length() > 50) {
             throw new BusinessValidationException("Назва товару обов'язкова і не може перевищувати 50 символів ");
+        }
+        if (request.producer() == null || request.producer().isBlank() || request.producer().length() > 50) {
+            throw new BusinessValidationException("Виробник обов'язковий і не може перевищувати 50 символів ");
         }
         if (request.characteristics() == null || request.characteristics().length() > 100) {
             throw new BusinessValidationException("Характеристики не можуть перевищувати 100 символів ");

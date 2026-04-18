@@ -25,6 +25,7 @@ public class ProductDao {
         p.setIdProduct(rs.getInt("id_product"));
         p.setCategoryNumber(rs.getInt("category_number"));
         p.setProductName(rs.getString("product_name"));
+        p.setProducer(rs.getString("producer"));
         p.setCharacteristics(rs.getString("characteristics"));
         return p;
     };
@@ -58,14 +59,15 @@ public class ProductDao {
 
     // Менеджер п. 1: Введення відомостей про новий товар
     public Product save(Product product) {
-        String sql = "INSERT INTO Product (category_number, product_name, characteristics) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO Product (category_number, product_name, producer, characteristics) VALUES (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, product.getCategoryNumber());
             ps.setString(2, product.getProductName());
-            ps.setString(3, product.getCharacteristics());
+            ps.setString(3, product.getProducer());
+            ps.setString(4, product.getCharacteristics());
             return ps;
         }, keyHolder);
 
@@ -77,10 +79,11 @@ public class ProductDao {
 
     // Менеджер п. 2: Редагувати дані про товари
     public void update(Product product) {
-        String sql = "UPDATE Product SET category_number = ?, product_name = ?, characteristics = ? WHERE id_product = ?";
+        String sql = "UPDATE Product SET category_number = ?, product_name = ?, producer = ?, characteristics = ? WHERE id_product = ?";
         jdbcTemplate.update(sql,
                 product.getCategoryNumber(),
                 product.getProductName(),
+                product.getProducer(),
                 product.getCharacteristics(),
                 product.getIdProduct());
     }

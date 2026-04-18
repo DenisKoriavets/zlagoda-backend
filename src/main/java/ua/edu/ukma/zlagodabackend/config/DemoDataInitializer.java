@@ -46,13 +46,13 @@ public class DemoDataInitializer implements CommandLineRunner {
         Category catDrinks = ensureCategory("Напої");
         Category catGrocery = ensureCategory("Бакалія");
 
-        Product milk = ensureProduct(catDairy.getCategoryNumber(), "Молоко 2.5% Галичина", "Пакет 900г");
-        Product bread = ensureProduct(catBakery.getCategoryNumber(), "Батон Київський", "Нарізаний, 500г");
-        Product sausage = ensureProduct(catMeat.getCategoryNumber(), "Ковбаса Лікарська Ятрань", "Вищий сорт");
-        Product caviar = ensureProduct(catMeat.getCategoryNumber(), "Ікра червона Шаланда", "Банка 120г");
-        Product water = ensureProduct(catDrinks.getCategoryNumber(), "Вода Моршинська", "1.5л негазирована");
-        Product pasta = ensureProduct(catGrocery.getCategoryNumber(), "Макарони Чумак", "Спіральки 400г");
-        Product buckwheat = ensureProduct(catGrocery.getCategoryNumber(), "Гречка Терно", "1 кг ядриця");
+        Product milk = ensureProduct(catDairy.getCategoryNumber(), "Молоко 2.5% Галичина", "Галичина", "Пакет 900г");
+        Product bread = ensureProduct(catBakery.getCategoryNumber(), "Батон Київський", "КиївХліб", "Нарізаний, 500г");
+        Product sausage = ensureProduct(catMeat.getCategoryNumber(), "Ковбаса Лікарська Ятрань", "Ятрань", "Вищий сорт");
+        Product caviar = ensureProduct(catMeat.getCategoryNumber(), "Ікра червона Шаланда", "Шаланда", "Банка 120г");
+        Product water = ensureProduct(catDrinks.getCategoryNumber(), "Вода Моршинська", "Моршинська", "1.5л негазирована");
+        Product pasta = ensureProduct(catGrocery.getCategoryNumber(), "Макарони Чумак", "Чумак", "Спіральки 400г");
+        Product buckwheat = ensureProduct(catGrocery.getCategoryNumber(), "Гречка Терно", "Терно", "1 кг ядриця");
 
         ensureStoreProduct("101", null, milk.getIdProduct(), "45.50", 50, false);
         ensureStoreProduct("102", null, milk.getIdProduct(), "36.40", 20, true);
@@ -121,7 +121,7 @@ public class DemoDataInitializer implements CommandLineRunner {
                 });
     }
 
-    private Product ensureProduct(int categoryId, String name, String chars) {
+    private Product ensureProduct(int categoryId, String name, String producer, String chars) {
         try {
             int id = jdbcTemplate.queryForObject(
                     "SELECT id_product FROM Product WHERE product_name = ?",
@@ -131,12 +131,14 @@ public class DemoDataInitializer implements CommandLineRunner {
             Product p = new Product();
             p.setIdProduct(id);
             p.setProductName(name);
+            p.setProducer(producer);
             p.setCharacteristics(chars);
             p.setCategoryNumber(categoryId);
             return p;
         } catch (EmptyResultDataAccessException e) {
             Product p = new Product();
             p.setProductName(name);
+            p.setProducer(producer);
             p.setCharacteristics(chars);
             p.setCategoryNumber(categoryId);
             return productDao.save(p);

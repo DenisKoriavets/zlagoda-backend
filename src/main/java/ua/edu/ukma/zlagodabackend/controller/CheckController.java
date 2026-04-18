@@ -98,7 +98,7 @@ public class CheckController {
     // Касир (Вимога 7): Здійснювати продаж товарів (додавання чеків)
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('MANAGER', 'CASHIER')")
+    @PreAuthorize("hasRole('CASHIER')")
     public CheckDetailsDto createCheck(
         @Valid @RequestBody CheckCreateRequest request,
         Authentication authentication) {
