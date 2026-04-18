@@ -40,13 +40,13 @@ public class ComplexQueryController {
     
     @GetMapping("/loyal-category-fans")
     @PreAuthorize("hasRole('MANAGER')")
-    public List<Map<String, Object>> getLoyalCategoryFans(@RequestParam String categoryName) {
+    public List<LoyalCategoryFanResponse> getLoyalCategoryFans(@RequestParam String categoryName) {
         return complexQueryService.getLoyalCategoryFans(categoryName);
     }
-    
+
     @GetMapping("/top-products-premium")
     @PreAuthorize("hasRole('MANAGER')")
-    public List<Map<String, Object>> getTopProductsPremium() {
+    public List<TopProductPremiumResponse> getTopProductsPremium() {
         return complexQueryService.getTopProductsPremium();
     }
 
