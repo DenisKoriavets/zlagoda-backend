@@ -8,20 +8,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import ua.edu.ukma.zlagodabackend.dao.CategoryDao;
-import ua.edu.ukma.zlagodabackend.dao.CheckDao;
-import ua.edu.ukma.zlagodabackend.dao.CustomerCardDao;
-import ua.edu.ukma.zlagodabackend.dao.EmployeeDao;
-import ua.edu.ukma.zlagodabackend.dao.ProductDao;
-import ua.edu.ukma.zlagodabackend.dao.SaleDao;
-import ua.edu.ukma.zlagodabackend.dao.StoreProductDao;
-import ua.edu.ukma.zlagodabackend.model.Category;
-import ua.edu.ukma.zlagodabackend.model.Check;
-import ua.edu.ukma.zlagodabackend.model.CustomerCard;
-import ua.edu.ukma.zlagodabackend.model.Employee;
-import ua.edu.ukma.zlagodabackend.model.Product;
-import ua.edu.ukma.zlagodabackend.model.Sale;
-import ua.edu.ukma.zlagodabackend.model.StoreProduct;
+
+import ua.edu.ukma.zlagodabackend.dao.*;
+import ua.edu.ukma.zlagodabackend.model.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -47,8 +36,6 @@ public class DemoDataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        log.info("Розпочато перевірку та наповнення бази даних тестовими даними...");
-
         ensureEmployee("1", "Адміністратор", "Системний", null, "manager", "35000", LocalDate.of(1990, 1, 1), "+380500000001");
         ensureEmployee("2", "Коваленко", "Іван", "Петрович", "cashier", "18000", LocalDate.of(1995, 5, 10), "+380500000002");
         ensureEmployee("3", "Мельник", "Олена", "Сергіївна", "cashier", "18500", LocalDate.of(1998, 12, 20), "+380500000003");
@@ -62,34 +49,56 @@ public class DemoDataInitializer implements CommandLineRunner {
         Product milk = ensureProduct(catDairy.getCategoryNumber(), "Молоко 2.5% Галичина", "Пакет 900г");
         Product bread = ensureProduct(catBakery.getCategoryNumber(), "Батон Київський", "Нарізаний, 500г");
         Product sausage = ensureProduct(catMeat.getCategoryNumber(), "Ковбаса Лікарська Ятрань", "Вищий сорт");
+        Product caviar = ensureProduct(catMeat.getCategoryNumber(), "Ікра червона Шаланда", "Банка 120г");
         Product water = ensureProduct(catDrinks.getCategoryNumber(), "Вода Моршинська", "1.5л негазирована");
         Product pasta = ensureProduct(catGrocery.getCategoryNumber(), "Макарони Чумак", "Спіральки 400г");
+        Product buckwheat = ensureProduct(catGrocery.getCategoryNumber(), "Гречка Терно", "1 кг ядриця");
 
-        ensureStoreProduct("100000000001", null, milk.getIdProduct(), "45.50", 50, false);
-        ensureStoreProduct("100000000002", null, milk.getIdProduct(), "36.40", 20, true);
-        linkStoreProducts("100000000001", "100000000002");
-
-        ensureStoreProduct("200000000001", null, water.getIdProduct(), "21.00", 150, false);
-        ensureStoreProduct("300000000002", null, sausage.getIdProduct(), "180.00", 15, true);
-        ensureStoreProduct("400000000001", null, bread.getIdProduct(), "28.00", 30, false);
-        ensureStoreProduct("500000000001", null, pasta.getIdProduct(), "42.00", 100, false);
+        ensureStoreProduct("101", null, milk.getIdProduct(), "45.50", 50, false);
+        ensureStoreProduct("102", null, milk.getIdProduct(), "36.40", 20, true);
+        linkStoreProducts("101", "102");
+        ensureStoreProduct("201", null, bread.getIdProduct(), "28.00", 30, false);
+        ensureStoreProduct("301", null, sausage.getIdProduct(), "180.00", 15, false);
+        ensureStoreProduct("302", null, caviar.getIdProduct(), "450.00", 20, false);
+        ensureStoreProduct("401", null, water.getIdProduct(), "21.00", 150, false);
+        ensureStoreProduct("501", null, pasta.getIdProduct(), "42.00", 100, false);
+        ensureStoreProduct("502", null, buckwheat.getIdProduct(), "55.00", 60, false);
 
         ensureCustomer("CARD000000001", "Шевченко", "Андрій", "Миколайович", "+380670000001", "Київ", "Хрещатик 1", "01001", 10);
         ensureCustomer("CARD000000002", "Франко", "Яна", "Віталіївна", "+380670000002", "Львів", "Франка 10", "79000", 5);
+        ensureCustomer("CARD000000003", "Косач", "Лариса", "Петрівна", "+380670000003", "Київ", "Л. Українки 15", "01015", 15);
+        ensureCustomer("CARD000000004", "Стус", "Василь", "Семенович", "+380670000004", "Львів", "Стуса 5", "79011", 0);
 
-        ensureFullCheck("CHK0000001", "2", "CARD000000001", LocalDateTime.now().minusDays(1),
-                List.of(
-                        new Sale("100000000001", "CHK0000001", 2, new BigDecimal("45.50")),
-                        new Sale("200000000001", "CHK0000001", 1, new BigDecimal("21.00"))
-                ));
+        LocalDateTime now = LocalDateTime.now();
 
-        ensureFullCheck("CHK0000002", "3", null, LocalDateTime.now().minusHours(5),
-                List.of(
-                        new Sale("500000000001", "CHK0000002", 3, new BigDecimal("42.00")),
-                        new Sale("400000000001", "CHK0000002", 1, new BigDecimal("28.00"))
-                ));
+        ensureFullCheck("CHK0000001", "2", "CARD000000001", now.minusDays(1), List.of(
+                new Sale("401", "CHK0000001", 2, new BigDecimal("21.00")),
+                new Sale("501", "CHK0000001", 1, new BigDecimal("42.00")),
+                new Sale("502", "CHK0000001", 1, new BigDecimal("55.00")),
+                new Sale("302", "CHK0000001", 1, new BigDecimal("450.00"))
+        ));
 
-        log.info("Наповнення бази завершено успішно.");
+        ensureFullCheck("CHK0000002", "3", "CARD000000002", now.minusDays(2), List.of(
+                new Sale("401", "CHK0000002", 3, new BigDecimal("21.00")),
+                new Sale("201", "CHK0000002", 1, new BigDecimal("28.00"))
+        ));
+
+        ensureFullCheck("CHK0000003", "2", "CARD000000003", now.minusDays(3), List.of(
+                new Sale("101", "CHK0000003", 2, new BigDecimal("45.50")),
+                new Sale("201", "CHK0000003", 1, new BigDecimal("28.00")),
+                new Sale("302", "CHK0000003", 2, new BigDecimal("450.00")),
+                new Sale("401", "CHK0000003", 1, new BigDecimal("21.00")),
+                new Sale("501", "CHK0000003", 1, new BigDecimal("42.00"))
+        ));
+
+        ensureFullCheck("CHK0000004", "3", "CARD000000004", now.minusDays(4), List.of(
+                new Sale("401", "CHK0000004", 5, new BigDecimal("21.00"))
+        ));
+
+        ensureFullCheck("CHK0000005", "2", null, now.minusHours(5), List.of(
+                new Sale("102", "CHK0000005", 2, new BigDecimal("36.40")),
+                new Sale("301", "CHK0000005", 1, new BigDecimal("180.00"))
+        ));
     }
 
     private void ensureEmployee(String id, String surname, String name, String patronymic, String role, String salary, LocalDate birth, String phone) {

@@ -52,7 +52,10 @@ public class ComplexQueryService {
 
     @Transactional(readOnly = true)
     public List<CityCustomerStatsResponse> getPurchasingPowerByCity(String city) {
-        return complexQueryDao.getCustomerStatsByCity(city);
+        if (city == null || city.isBlank()) {
+            throw new BusinessValidationException("Назва міста є обов'язковою для цього звіту.");
+        }
+        return complexQueryDao.getCustomerStatsByCity(city.trim());
     }
 
     @Transactional(readOnly = true)

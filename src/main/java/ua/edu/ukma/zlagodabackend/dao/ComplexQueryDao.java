@@ -113,8 +113,12 @@ public class ComplexQueryDao {
 
     public List<CityCustomerStatsResponse> getCustomerStatsByCity(String city) {
         String sql = """
-                SELECT cc.cust_surname, cc.cust_name, COUNT(DISTINCT ch.check_number) AS checks_count,
-                       SUM(s.selling_price * s.product_number) AS total_spent
+                SELECT cc.card_number,
+                       cc.cust_surname,
+                       cc.cust_name,
+                       COUNT(DISTINCT ch.check_number) AS total_checks,
+                       COALESCE(SUM(s.product_number), 0)::int AS total_items_bought,
+                       COALESCE(SUM(s.selling_price * s.product_number), 0) AS total_spent
                 FROM Customer_Card cc
                 JOIN "check" ch ON cc.card_number = ch.card_number
                 JOIN Sale s ON ch.check_number = s.check_number
