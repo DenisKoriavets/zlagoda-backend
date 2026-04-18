@@ -66,6 +66,13 @@ public class EmployeeController {
         return employeeService.findCashiersSortedBySurname();
     }
 
+    // Менеджер, пошук у переліку працівників за прізвищем
+    @GetMapping("/search-by-surname/{surname}")
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<Employee> searchEmployeesBySurname(@PathVariable String surname) {
+        return employeeService.findBySurname(surname.trim());
+    }
+
     // Менеджер, п. 11: За прізвищем працівника знайти його телефон та адресу
     @GetMapping("/contacts/{surname}")
     @PreAuthorize("hasRole('MANAGER')")

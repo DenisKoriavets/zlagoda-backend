@@ -12,9 +12,7 @@ import ua.edu.ukma.zlagodabackend.exception.BusinessValidationException;
 import ua.edu.ukma.zlagodabackend.exception.ResourceNotFoundException;
 import ua.edu.ukma.zlagodabackend.model.Employee;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.List;
 import java.util.Objects;
@@ -45,9 +43,17 @@ public class EmployeeService {
         return employeeDao.findCashiersSortedBySurname();
     }
 
+    // Менеджер: Пошук працівників за прізвищем
+    public List<Employee> findBySurname(String surname) {
+        if (surname == null || surname.isBlank()) {
+            throw new BusinessValidationException("Для пошуку потрібно вказати прізвище.");
+        }
+        return employeeDao.findBySurname(surname.trim());
+    }
+
     // Менеджер п. 11: За прізвищем працівника знайти його телефон та адресу
     public List<EmployeeContactResponse> findContactsBySurname(String surname) {
-        return employeeDao.findBySurname(surname).stream()
+        return findBySurname(surname).stream()
                 .map(e -> {
                     // Формуємо ПІБ (по батькові може бути null) [cite: 150]
                     String fullName = Stream.of(e.getEmplSurname(), e.getEmplName(), e.getEmplPatronymic())
