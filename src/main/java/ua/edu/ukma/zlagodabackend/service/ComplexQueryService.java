@@ -37,7 +37,7 @@ public class ComplexQueryService {
     }
 
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> getLoyalCategoryFans(String categoryName) {
+    public List<LoyalCategoryFanResponse> getLoyalCategoryFans(String categoryName) {
         if (categoryName == null || categoryName.isBlank()) {
             throw new BusinessValidationException("Назва категорії є обов'язковою для цього звіту.");
         }
@@ -45,7 +45,7 @@ public class ComplexQueryService {
     }
 
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> getTopProductsPremium() {
+    public List<TopProductPremiumResponse> getTopProductsPremium() {
         return complexQueryDao.getTopProductsPremium();
     }
 
